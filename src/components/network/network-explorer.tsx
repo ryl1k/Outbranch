@@ -1,7 +1,7 @@
 "use client"
 
 import "@xyflow/react/dist/style.css"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import {
   Background,
@@ -432,12 +432,18 @@ function RelationshipList({ graph, projectId }: { graph: CulturalGraph; projectI
   )
 }
 
+const MOBILE = "(max-width: 767px)"
+const subscribeMobile = (cb: () => void) => {
+  const mq = window.matchMedia(MOBILE)
+  mq.addEventListener("change", cb)
+  return () => mq.removeEventListener("change", cb)
+}
+
 export function NetworkExplorer({ graph, projectId }: { graph: CulturalGraph; projectId: string }) {
-  const [view, setView] = useState<"graph" | "list">("graph")
-  useEffect(() => {
-    // Large graphs are impractical on small screens: default to the list there.
-    if (window.matchMedia("(max-width: 767px)").matches) setView("list")
-  }, [])
+  // Large graphs are impractical on small screens: default to the list there.
+  const isMobile = useSyncExternalStore(subscribeMobile, () => window.matchMedia(MOBILE).matches, () => false)
+  const [choice, setView] = useState<"graph" | "list" | null>(null)
+  const view = choice ?? (isMobile ? "list" : "graph")
   return (
     <div className="space-y-4">
       <ToggleGroup type="single" value={view} onValueChange={(v) => v && setView(v as "graph" | "list")} variant="outline" size="sm" aria-label="View">
