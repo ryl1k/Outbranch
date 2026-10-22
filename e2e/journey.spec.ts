@@ -19,8 +19,10 @@ test("landing page communicates the product and leads to research", async ({ pag
   await page.goto("/")
   await expect(page.getByRole("heading", { level: 1 })).toContainText("See further.")
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Grow smarter.")
-  await page.getByRole("button", { name: "Strategic partners" }).hover()
-  await expect(page.locator("#hero-flow-detail")).toContainText("share your audience")
+  // The hero demo types a company name, then lights up its growth paths.
+  const demo = page.getByRole("group", { name: /Animated demo/ })
+  await expect(demo.getByText("4 growth paths found")).toBeVisible({ timeout: 20_000 })
+  await expect(demo.getByRole("link", { name: /Strategic partners/ })).toBeVisible()
   await page.getByRole("link", { name: "Explore opportunities" }).first().click()
   await expect(page).toHaveURL(/\/signin\?next=%2Fprojects%2Fnew/)
 })

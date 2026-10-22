@@ -3,7 +3,7 @@ import { ArrowRight, BadgeCheck, CircleHelp, Compass, Lightbulb, Radar, Sprout }
 import { BranchLines } from "@/components/brand/branch-lines"
 import { GithubIcon } from "@/components/brand/github-icon"
 import { Logo } from "@/components/brand/logo"
-import { HeroFlow } from "@/components/marketing/hero-flow"
+import { HeroScene, HeroSceneCompact } from "@/components/marketing/hero-scene"
 import { SignalPreview } from "@/components/marketing/signal-preview"
 import { Button } from "@/components/ui/button"
 
@@ -81,11 +81,15 @@ export default function LandingPage() {
   return (
     <div className="bg-porcelain">
       <section className="theme-dark relative overflow-hidden bg-background text-foreground">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgb(107_17_46/0.45),transparent_60%)]" aria-hidden />
-        <Nav />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pt-8 pb-20 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:pt-16 lg:pb-28">
-          <div className="max-w-xl">
-            <h1 className="font-editorial text-[clamp(3.25rem,7vw,6rem)] leading-[0.98] text-ivory">
+        <HeroScene className="absolute inset-0 hidden h-full w-full xl:block" />
+        {/* Keeps the headline legible over the converging streams. */}
+        <div className="pointer-events-none absolute inset-0 hidden xl:block bg-[linear-gradient(90deg,rgb(26_14_20/0.94)_0%,rgb(26_14_20/0.78)_30%,rgb(26_14_20/0.25)_44%,transparent_54%)] " aria-hidden />
+        <div className="relative">
+          <Nav />
+        </div>
+        <div className="relative mx-auto flex min-h-[640px] max-w-7xl flex-col justify-center px-4 pt-6 pb-10 sm:px-8 xl:min-h-[min(78vh,760px)] xl:pb-24">
+          <div className="max-w-2xl">
+            <h1 className="font-editorial text-[clamp(3.25rem,6.2vw,5.75rem)] leading-[0.98] whitespace-nowrap text-ivory">
               See further.
               <br />
               <span className="text-rose">Grow smarter.</span>
@@ -104,7 +108,8 @@ export default function LandingPage() {
               </Button>
             </div>
           </div>
-          <HeroFlow />
+          <HeroScene mode="inline" className="mt-6 hidden h-auto w-full [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,black_24%),linear-gradient(to_bottom,transparent,black_6%,black_92%,transparent)] md:block xl:hidden" />
+          <HeroSceneCompact className="mt-8 w-full md:hidden" />
         </div>
         <div className="relative border-t border-ivory/10">
           <ul className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-8">
