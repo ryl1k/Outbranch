@@ -299,3 +299,13 @@ export async function setOpportunityExcluded(projectId: string, opportunityId: s
     revalidatePath(`/projects/${projectId}`, "layout")
   })
 }
+
+export async function requestDeepDive(projectId: string, opportunityId: string) {
+  return runAction(async () => {
+    const opp = await assertOpportunity(projectId, opportunityId)
+    const { viewer } = await assertProjectAccess(projectId)
+    await assertJobBudget(viewer.workspace.id)
+    await enqueueJob({ projectId, workspaceId: viewer.workspace.id, kind: "DEEP_DIVE", opportunityId: opp.id })
+    revalidatePath(`/projects/${projectId}/opportunities/${opportunityId}`)
+  })
+}

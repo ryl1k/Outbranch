@@ -112,3 +112,43 @@ export async function getOpportunityPortfolio(projectId: string) {
 
 export type Portfolio = Awaited<ReturnType<typeof getOpportunityPortfolio>>
 export type PortfolioOpportunity = Portfolio["opportunities"][number]
+
+export async function getOpportunityDetail(projectId: string, opportunityId: string) {
+  const opp = await db.opportunity.findFirst({
+    where: { id: opportunityId, projectId },
+    include: {
+      evaluations: { orderBy: { createdAt: "desc" }, take: 1 },
+      claims: { include: { source: true, evidence: { select: { role: true } } }, orderBy: { status: "asc" } },
+      evidence: {
+        include: {
+          relationship: { include: { targetEntity: true, sourceEntity: true, query: { select: { retrievedAt: true, endpoint: true } } } },
+          insight: true,
+          claim: { include: { source: true } },
+        },
+      },
+      shortlistItems: { select: { shortlistId: true } },
+      constraints: { select: { iteration: true } },
+    },
+  })
+  if (!opp) return null
+  const [activeJob, explainEntities] = await Promise.all([
+    db.researchJob.findFirst({
+      where: { projectId, opportunityId, status: { in: ["QUEUED", "RUNNING"] } },
+    }),
+    // Map explainability contributor ids (Qloo ids) to names for display.
+    db.qlooEntity.findMany({
+      where: {
+        qlooId: {
+          in: opp.evidence.flatMap((e) => {
+            const ex = e.relationship?.explainability as { contributors?: { entityId: string }[] } | null
+            return ex?.contributors?.map((c) => c.entityId) ?? []
+          }),
+        },
+      },
+      select: { qlooId: true, name: true },
+    }),
+  ])
+  return { opp, activeJob, contributorNames: new Map(explainEntities.map((e) => [e.qlooId, e.name])) }
+}
+
+export type OpportunityDetail = NonNullable<Awaited<ReturnType<typeof getOpportunityDetail>>>

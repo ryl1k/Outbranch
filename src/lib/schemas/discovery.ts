@@ -207,3 +207,30 @@ export const commercialFindingsSchema = z.object({
   ),
 })
 export type CommercialFindings = z.infer<typeof commercialFindingsSchema>
+
+// ---------------------------------------------------------------------------
+// Deep dive (LLM output)
+// ---------------------------------------------------------------------------
+
+export const deepDiveSchema = z.object({
+  executiveSummary: z.string().describe("4-6 sentences a business development lead can act on"),
+  marketResearch: z.string().describe("What the research says about the market; cite figures only if present in the evidence"),
+  competitiveLandscape: z.string(),
+  financialAssumptions: z.array(
+    z.object({
+      assumption: z.string(),
+      basis: z.enum(["SOURCED", "ESTIMATE", "UNKNOWN"]).describe("SOURCED only when a figure appears in the evidence"),
+      note: z.string(),
+    }),
+  ),
+  validationStrategy: z.array(
+    z.object({
+      step: z.string(),
+      successSignal: z.string().describe("Observable result that would confirm the hypothesis"),
+      effort: z.enum(["low", "medium", "high"]),
+    }),
+  ),
+  nextSteps: z.array(z.string()).describe("Concrete actions for the next 30-90 days; none require committing money without approval"),
+  keyRisks: z.array(z.object({ risk: z.string(), mitigation: z.string() })),
+})
+export type DeepDive = z.infer<typeof deepDiveSchema>
