@@ -10,7 +10,7 @@ export async function resetDb() {
 }
 
 /** A user, workspace and project in a given stage. */
-export async function seedProject(stage: "INPUT" | "CONFIGURING" | "READY" = "INPUT") {
+export async function seedProject(stage: "INPUT" | "CONFIGURING" | "DISCOVERING" | "READY" = "INPUT") {
   const user = await db.user.create({ data: { name: "Test", isGuest: true } })
   const workspace = await db.workspace.create({
     data: { name: "Test workspace", members: { create: { userId: user.id } } },
