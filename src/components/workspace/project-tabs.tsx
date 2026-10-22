@@ -17,7 +17,7 @@ export function ProjectTabs({ projectId, hasResults }: { projectId: string; hasR
   const pathname = usePathname()
   const base = `/projects/${projectId}`
   return (
-    <nav aria-label="Project sections" className="-mb-px flex gap-1 overflow-x-auto">
+    <nav aria-label="Project sections" className="scrollbar-none -mb-px flex gap-1 overflow-x-auto">
       {TABS.map(({ slug, label }) => {
         const href = slug ? `${base}/${slug}` : base
         const active = slug ? pathname.startsWith(href) : pathname === base

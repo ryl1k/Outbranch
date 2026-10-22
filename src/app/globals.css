@@ -300,3 +300,8 @@
   .report h2, .report h3 { break-after: avoid; }
   .report table, .report blockquote { break-inside: avoid; }
 }
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
