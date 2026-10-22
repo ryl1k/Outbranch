@@ -75,10 +75,12 @@ export function dedupeOpportunities<T extends { category: string; title: string 
 /** Map model-written aliases back to ids, dropping anything the model invented. */
 export function resolveAliases(aliases: string[], table: Map<string, string>): string[] {
   const out = new Set<string>()
+  // Models sometimes write several aliases in one string ("R1, R4") or decorate them ("[R2]").
   for (const raw of aliases) {
-    const alias = raw.trim().toUpperCase()
-    const id = table.get(alias)
-    if (id) out.add(id)
+    for (const match of raw.toUpperCase().matchAll(/([RSIO]d+)/g)) {
+      const id = table.get(match[1])
+      if (id) out.add(id)
+    }
   }
   return [...out]
 }

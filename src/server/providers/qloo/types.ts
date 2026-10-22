@@ -47,7 +47,14 @@ export const rawEntitySchema = z
     popularity: z.number().optional(),
     disambiguation: z.string().optional(),
     properties: z.record(z.string(), z.unknown()).optional(),
-    tags: z.array(rawTag).optional(),
+    // Tags are auxiliary: keep well-formed ones and skip partial entries (seen live: type-only tags).
+    tags: z
+      .array(z.unknown())
+      .optional()
+      .transform((tags) => (tags ?? []).flatMap((t) => {
+        const parsed = rawTag.safeParse(t)
+        return parsed.success ? [parsed.data] : []
+      })),
     query: z
       .object({
         affinity: z.number().optional(),
@@ -57,9 +64,9 @@ export const rawEntitySchema = z
       .loose()
       .optional(),
   })
-  .loose()
 
-export type RawEntity = z.infer<typeof rawEntitySchema>
+type ParsedEntity = z.infer<typeof rawEntitySchema>
+export type RawEntity = Omit<ParsedEntity, "tags"> & { tags?: ParsedEntity["tags"] }
 
 export const searchResponseSchema = z.object({ results: z.array(rawEntitySchema) }).loose()
 

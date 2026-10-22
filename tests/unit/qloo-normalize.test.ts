@@ -47,6 +47,13 @@ describe("normalizeEntity", () => {
     expect(normalizeEntity(parsed.results[0]).tags[0].id).toBe("urn:tag:keyword:media:x")
   })
 
+  it("skips malformed tags instead of rejecting the entity", () => {
+    const parsed = insightsResponseSchema.parse({
+      results: { entities: [{ name: "Artist", entity_id: "A1", tags: [{ type: "urn:tag:voice_type:qloo" }, { id: "t1", name: "Rock" }] }] },
+    })
+    expect(normalizeEntity(parsed.results.entities[0]).tags.map((x) => x.id)).toEqual(["t1"])
+  })
+
   it("falls back to subtype when types is absent and tolerates missing properties", () => {
     const e = normalizeEntity({ name: "X", entity_id: "1", subtype: "urn:entity:artist" })
     expect(e.types).toEqual(["urn:entity:artist"])

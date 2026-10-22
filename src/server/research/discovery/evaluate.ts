@@ -1,6 +1,6 @@
 import "server-only"
 import type { Prisma } from "@/generated/prisma/client"
-import { commercialFindingsSchema, evaluationGenerationSchema } from "@/lib/schemas/discovery"
+import { commercialFindingsSchema, evaluationCriteriaSchema, evaluationGenerationSchema } from "@/lib/schemas/discovery"
 import { db } from "@/server/db"
 import type { JobContext } from "@/server/jobs/lifecycle"
 import { generateStructured, untrusted } from "@/server/providers/anthropic/client"
@@ -94,14 +94,32 @@ export async function evaluateOpportunities(job: JobContext, ctx: DiscoveryConte
   await rerank(job.projectId)
 }
 
-/** Ranks all active opportunities in the project by their latest evaluation. */
+/**
+ * Ranks all active opportunities in the project. Evidence strength and score are
+ * recomputed from stored criteria and current evidence, so opportunities from
+ * earlier iterations are ranked by exactly the same rules as new ones.
+ */
 export async function rerank(projectId: string) {
   const opps = await db.opportunity.findMany({
     where: { projectId, status: "CANDIDATE" },
     include: { evaluations: { orderBy: { createdAt: "desc" }, take: 1 } },
   })
-  const sorted = opps
-    .map((o) => ({ id: o.id, score: o.evaluations[0]?.rankScore ?? -1 }))
-    .sort((a, b) => b.score - a.score)
-  await db.$transaction(sorted.map((o, i) => db.opportunity.update({ where: { id: o.id }, data: { rank: i + 1 } })))
+  const scored = await Promise.all(
+    opps.map(async (o) => {
+      const strength = deriveEvidenceStrength(await evidenceCounts(o.id))
+      const evaluation = o.evaluations[0]
+      const criteria = evaluationCriteriaSchema.safeParse(evaluation?.criteria)
+      const score = criteria.success ? computeRankScore(criteria.data, strength) : -1
+      return { id: o.id, strength, score, evaluationId: evaluation?.id }
+    }),
+  )
+  scored.sort((a, b) => b.score - a.score)
+  await db.$transaction(
+    scored.flatMap((o, i) => [
+      db.opportunity.update({ where: { id: o.id }, data: { rank: i + 1, evidenceStrength: o.strength } }),
+      ...(o.evaluationId && o.score >= 0
+        ? [db.opportunityEvaluation.update({ where: { id: o.evaluationId }, data: { rankScore: o.score } })]
+        : []),
+    ]),
+  )
 }

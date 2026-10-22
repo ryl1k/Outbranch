@@ -68,4 +68,13 @@ describe("resolveAliases", () => {
     ])
     expect(resolveAliases(["r1", "R2", "R9", "R1"], table)).toEqual(["rel_a", "rel_b"])
   })
+
+  it("extracts several aliases from one decorated string", () => {
+    const table = new Map([
+      ["R1", "a"],
+      ["R4", "b"],
+      ["R12", "c"],
+    ])
+    expect(resolveAliases(["R1, R4", "[R12]", "see R41"], table)).toEqual(["a", "b", "c"])
+  })
 })
