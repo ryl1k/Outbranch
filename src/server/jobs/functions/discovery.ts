@@ -50,6 +50,24 @@ export const discoveryJob = inngest.createFunction(
       }
 
       const cultural = await step.run("cultural-signals", async () => gatherCulturalSignals(job, await load(), plan, seeds))
+
+      // Every Qloo query failed or came back empty: generation would discard every
+      // hypothesis for lack of evidence, so stop honestly instead of spending on it.
+      const usable = await step.run("check-cultural-evidence", async () =>
+        cultural.total > 0 || (await db.culturalRelationship.count({ where: { projectId } })) > 0,
+      )
+      if (!usable) {
+        await step.run("no-cultural-evidence", async () => {
+          await job.note(
+            "cultural",
+            `Qloo returned no cultural relationships${cultural.failures.length ? " (some queries failed)" : ""}. Discovery stopped before generating unsupported hypotheses. Try again later or broaden the cultural references.`,
+            "ERROR",
+          )
+          await restoreProjectStage(projectId, "DISCOVERY")
+          await markFinished(jobId, "PARTIAL", "Stopped: no cultural evidence returned")
+        })
+        return { outcome: "no-cultural-evidence" }
+      }
       await step.run("cultural-insights", async () => interpretCulture(job, await load()))
       const generated = await step.run("generate", async () => generateOpportunities(job, await load()))
 

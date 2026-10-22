@@ -10,6 +10,7 @@ const { db } = await import("@/server/db")
 const lifecycle = await import("@/server/jobs/lifecycle")
 const { persistBrandProfile } = await import("@/server/research/brand")
 const { ProviderUnavailableError } = await import("@/server/providers/errors")
+const { assertGlobalBudget, RateLimitError } = await import("@/server/security/rate-limit")
 const { resetDb, seedProject } = await import("../helpers/db")
 
 const extraction = {
@@ -111,5 +112,16 @@ describe("job lifecycle (integration)", () => {
     const failed = await db.researchJob.findUniqueOrThrow({ where: { id: job.id } })
     expect(failed.error).toBe("Qloo is not configured. Switch to fixture mode or add credentials.")
     expect(failed.error).not.toContain("QLOO_API_KEY")
+  })
+})
+
+describe("global demo budget (integration)", () => {
+  beforeEach(resetDb)
+
+  it("stops new research deployment-wide once the hourly job limit is reached", async () => {
+    const { project } = await seedProject()
+    await expect(assertGlobalBudget()).resolves.toBeUndefined()
+    await db.researchJob.createMany({ data: Array.from({ length: 60 }, () => ({ projectId: project.id, kind: "RESOLVE_ENTITY" as const })) })
+    await expect(assertGlobalBudget()).rejects.toBeInstanceOf(RateLimitError)
   })
 })

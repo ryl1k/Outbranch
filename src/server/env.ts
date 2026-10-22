@@ -17,6 +17,9 @@ const schema = z.object({
   QLOO_API_KEY: z.string().optional(),
   QLOO_API_URL: z.string().url().default("https://hackathon.api.qloo.com"),
   PROVIDER_MODE: z.enum(["live", "fixture"]).default("live"),
+  /** Global guardrails for public demos (guest sign-in creates unlimited workspaces). */
+  GLOBAL_JOBS_PER_HOUR: z.coerce.number().int().positive().default(60),
+  DAILY_SPEND_LIMIT_USD: z.coerce.number().positive().optional(),
   INNGEST_EVENT_KEY: z.string().optional(),
   INNGEST_SIGNING_KEY: z.string().optional(),
 })

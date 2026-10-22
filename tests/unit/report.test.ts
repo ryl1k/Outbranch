@@ -13,7 +13,7 @@ const opp: ReportOpportunity = {
   partners: [{ name: "Studio X", role: "Artwork" }],
   risks: ["Low repeat purchase"],
   unknowns: ["Price sensitivity"],
-  qlooEvidence: [{ entity: "Sullen", domain: "urn:entity:brand", rank: 2 }],
+  qlooEvidence: [{ entity: "Inkwell", domain: "urn:entity:brand", rank: 2 }],
   criteria: { strategicFit: { level: "high", basis: "MODEL_ASSESSED", rationale: "Fits the brand." } },
   commercial: null,
   deepDive: null,
@@ -43,7 +43,7 @@ describe("report formatting", () => {
     const out = renderOpportunityReport(input)
     expect(out).toContain("# Opportunity brief: Tattoo \\| artist cans")
     expect(out).toContain("_AI-generated hypothesis_")
-    expect(out).toContain("| Sullen | Brand | #2 |")
+    expect(out).toContain("| Inkwell | Brand | #2 |")
     expect(out).toContain("Studio X — Artwork")
     expect(out.match(/https:\/\/a\.example\/1/g)).toHaveLength(1)
     expect(out).toContain("_Commercial research has not been performed")

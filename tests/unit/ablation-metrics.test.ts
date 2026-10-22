@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest"
 import { armMetrics } from "@/server/evaluation/metrics"
 
 const affinities = [
-  { name: "Sullen Art Collective", domain: "urn:entity:brand" },
-  { name: "Zumiez", domain: "urn:entity:brand" },
-  { name: "Dead by Daylight", domain: "urn:entity:videogame" },
+  { name: "Inkwell Collective", domain: "urn:entity:brand" },
+  { name: "Board Shop Co", domain: "urn:entity:brand" },
+  { name: "Night Terror Game", domain: "urn:entity:videogame" },
 ]
 
 describe("ablation metrics", () => {
   it("counts Qloo-verified, novel and cross-domain entities per arm", () => {
     const m = armMetrics(
       [
-        { opportunity: "a", entities: ["Sullen Art Collective", "sullen art collective", "Tony Hawk"] },
-        { opportunity: "b", entities: ["Dead by Daylight", "Unknown Partner"] },
+        { opportunity: "a", entities: ["Inkwell Collective", "inkwell collective", "Tony Hawk"] },
+        { opportunity: "b", entities: ["Night Terror Game", "Unknown Partner"] },
         { opportunity: "c", entities: [] },
       ],
       affinities,

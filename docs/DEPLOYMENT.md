@@ -6,8 +6,9 @@ The reference deployment is **Vercel** (Next.js), **Neon** (Postgres) and **Inng
 
 ## 1. Database
 
-1. Create a Postgres database (Neon: create a project and copy the **pooled** connection string).
-2. Run migrations from your machine:
+1. Create a Postgres database. With Neon, copy both the **pooled** connection string (for the app)
+   and the **direct** one (for migrations; pooled connections can break `prisma migrate`).
+2. Run migrations from your machine using the direct connection string:
 
    ```bash
    DATABASE_URL="<connection string>" npx prisma migrate deploy
@@ -34,6 +35,8 @@ Import the repository and set these environment variables:
 | `QLOO_API_URL` | `https://hackathon.api.qloo.com` for hackathon keys |
 | `PROVIDER_MODE` | `live` |
 | `INNGEST_EVENT_KEY` / `INNGEST_SIGNING_KEY` | from step 2 |
+| `GLOBAL_JOBS_PER_HOUR` | deployment-wide research jobs per hour (default 60) |
+| `DAILY_SPEND_LIMIT_USD` | optional cap on 24h model-token spend; a full study costs about $0.80 in tokens plus web searches |
 
 The build command is `npm run build` (it runs `prisma generate`). Function duration: the
 Inngest route sets `maxDuration = 300`, and each step is a separate short invocation.
