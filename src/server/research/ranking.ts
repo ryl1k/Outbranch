@@ -77,7 +77,7 @@ export function resolveAliases(aliases: string[], table: Map<string, string>): s
   const out = new Set<string>()
   // Models sometimes write several aliases in one string ("R1, R4") or decorate them ("[R2]").
   for (const raw of aliases) {
-    for (const match of raw.toUpperCase().matchAll(/([RSIO]d+)/g)) {
+    for (const match of raw.toUpperCase().matchAll(/\b([RSIO]\d+)\b/g)) {
       const id = table.get(match[1])
       if (id) out.add(id)
     }
