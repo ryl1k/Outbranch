@@ -152,3 +152,32 @@ export async function getOpportunityDetail(projectId: string, opportunityId: str
 }
 
 export type OpportunityDetail = NonNullable<Awaited<ReturnType<typeof getOpportunityDetail>>>
+
+/** Opportunities to compare: explicit ids, else the shortlist, else the top three. */
+export async function getComparison(projectId: string, ids: string[]) {
+  let selected = ids.slice(0, 4)
+  if (selected.length < 2) {
+    const shortlist = await db.shortlistItem.findMany({ where: { shortlist: { projectId } }, select: { opportunityId: true } })
+    selected = shortlist.map((s) => s.opportunityId).slice(0, 4)
+  }
+  if (selected.length < 2) {
+    const top = await db.opportunity.findMany({ where: { projectId, status: "CANDIDATE" }, orderBy: { rank: "asc" }, take: 3, select: { id: true } })
+    selected = top.map((t) => t.id)
+  }
+  const opps = await db.opportunity.findMany({
+    where: { projectId, id: { in: selected } },
+    include: {
+      evaluations: { orderBy: { createdAt: "desc" }, take: 1 },
+      claims: { select: { status: true, sourceId: true, evidence: { select: { role: true } } } },
+      evidence: { include: { relationship: { include: { targetEntity: true } } } },
+      constraints: { select: { regions: true } },
+    },
+  })
+  const all = await db.opportunity.findMany({
+    where: { projectId, status: "CANDIDATE" },
+    orderBy: { rank: "asc" },
+    select: { id: true, title: true, rank: true },
+  })
+  return { opportunities: selected.flatMap((id) => opps.filter((o) => o.id === id)), all }
+}
+export type Comparison = Awaited<ReturnType<typeof getComparison>>
