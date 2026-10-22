@@ -63,12 +63,26 @@ export async function enqueueJob(input: {
   }
 }
 
+/**
+ * After a job stops without its own handler running (cancellation, sweeper),
+ * put the project back in a stage the UI can act on.
+ */
+export async function restoreProjectStage(projectId: string, kind: JobKind) {
+  if (kind === "RESOLVE_ENTITY" || kind === "BRAND_RESEARCH") {
+    await db.project.update({ where: { id: projectId }, data: { stage: "FAILED" } })
+  } else if (kind === "DISCOVERY") {
+    const existing = await db.opportunity.count({ where: { projectId, status: "CANDIDATE" } })
+    await db.project.update({ where: { id: projectId }, data: { stage: existing ? "READY" : "CONFIGURING" } })
+  }
+}
+
 export async function requestCancel(jobId: string) {
   const job = await db.researchJob.update({
     where: { id: jobId },
     data: { cancelRequestedAt: new Date(), status: "CANCELLED", finishedAt: new Date() },
   })
   await emit(jobId, job.projectId, "cancelled", "Research cancelled by user", "WARNING")
+  await restoreProjectStage(job.projectId, job.kind)
   await inngest.send(events.jobCancelled.create({ jobId }))
   return job
 }

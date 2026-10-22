@@ -69,6 +69,37 @@ export async function restartResolution(projectId: string, identifier?: string) 
   })
 }
 
+/** Retry whatever kind of job last stopped, never a different stage. */
+export async function retryLastJob(projectId: string) {
+  return runAction(async () => {
+    const { viewer } = await assertProjectAccess(id.parse(projectId))
+    await assertJobBudget(viewer.workspace.id)
+    const last = await db.researchJob.findFirst({
+      where: { projectId, status: { in: ["FAILED", "CANCELLED", "PARTIAL"] } },
+      orderBy: { createdAt: "desc" },
+    })
+    const kind = last?.kind ?? "RESOLVE_ENTITY"
+    if (kind === "DISCOVERY") {
+      const profile = await db.brandProfile.findUnique({ where: { projectId } })
+      if (profile?.status !== "CONFIRMED") throw new z.ZodError([{ code: "custom", message: "Confirm the brand profile first", path: [] }])
+    }
+    await enqueueJob({
+      projectId,
+      workspaceId: viewer.workspace.id,
+      kind,
+      constraintsId: last?.constraintsId ?? undefined,
+      opportunityId: last?.opportunityId ?? undefined,
+    })
+    revalidatePath(`/projects/${projectId}`)
+  })
+}
+
+/** Any profile change after confirmation sends the project back to verification. */
+async function invalidateConfirmation(projectId: string) {
+  await db.brandProfile.updateMany({ where: { projectId, status: "CONFIRMED" }, data: { status: "DRAFT", confirmedAt: null } })
+  await db.project.updateMany({ where: { id: projectId, stage: "CONFIGURING" }, data: { stage: "NEEDS_CONFIRMATION" } })
+}
+
 export async function retryBrandResearch(projectId: string) {
   return runAction(async () => {
     const { viewer } = await assertProjectAccess(id.parse(projectId))
@@ -110,6 +141,7 @@ export async function updateProfile(projectId: string, patch: z.input<typeof pro
       where: { projectId },
       data: { ...data, status: "DRAFT", confirmedAt: null },
     })
+    await invalidateConfirmation(projectId)
     for (const [field, value] of Object.entries(data)) {
       if (value) {
         await db.claim.create({
@@ -129,6 +161,7 @@ export async function setClaimRejected(projectId: string, claimId: string, rejec
     // Restoring returns a claim to INFERRED: we no longer assert the original verification.
     const status = rejected ? "REJECTED" : claim.sourceId ? "VERIFIED" : "INFERRED"
     await db.claim.update({ where: { id: claim.id }, data: { status } })
+    await invalidateConfirmation(projectId)
     revalidatePath(`/projects/${projectId}`)
   })
 }
@@ -139,6 +172,7 @@ export async function setCulturalRefRemoved(projectId: string, refName: string, 
     const profile = await db.brandProfile.findUniqueOrThrow({ where: { projectId } })
     const refs = culturalRefListSchema.parse(profile.culturalRefs).map((r) => (r.name === refName ? { ...r, removed } : r))
     await db.brandProfile.update({ where: { projectId }, data: { culturalRefs: refs } })
+    await invalidateConfirmation(projectId)
     revalidatePath(`/projects/${projectId}`)
   })
 }
@@ -148,6 +182,7 @@ export async function addUserContext(projectId: string, statement: string) {
     await assertProjectAccess(id.parse(projectId))
     const text = z.string().trim().min(3).max(600).parse(statement)
     await db.claim.create({ data: { projectId, topic: "user:context", statement: text, status: "USER_PROVIDED" } })
+    await invalidateConfirmation(projectId)
     revalidatePath(`/projects/${projectId}`)
   })
 }

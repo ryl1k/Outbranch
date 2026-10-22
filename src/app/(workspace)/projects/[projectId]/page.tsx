@@ -34,8 +34,20 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
   switch (project.stage) {
     case "INPUT":
     case "RESOLVING":
-    case "RESEARCHING_BRAND":
-      return <div className="mx-auto max-w-3xl">{progress}</div>
+    case "RESEARCHING_BRAND": {
+      const active = timeline.jobs.some((j) => j.status === "QUEUED" || j.status === "RUNNING")
+      return (
+        <div className="mx-auto max-w-3xl space-y-6">
+          {!active && (
+            <div className="flex flex-col gap-3 rounded-xl border bg-warning-soft p-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm">Research is not running. It may have been interrupted or cancelled.</p>
+              <RetryButton projectId={projectId} />
+            </div>
+          )}
+          {progress}
+        </div>
+      )
+    }
 
     case "NEEDS_SELECTION": {
       const candidates = await getCandidates(projectId)

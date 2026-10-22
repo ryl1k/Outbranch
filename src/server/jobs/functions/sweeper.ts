@@ -1,6 +1,6 @@
 import { db } from "@/server/db"
 import { inngest } from "../client"
-import { emit } from "../lifecycle"
+import { emit, restoreProjectStage } from "../lifecycle"
 
 const STALE_AFTER_MS = 30 * 60 * 1000
 
@@ -20,7 +20,7 @@ export const sweepStaleJobs = inngest.createFunction(
           createdAt: { lt: cutoff },
           events: { none: { createdAt: { gte: cutoff } } },
         },
-        select: { id: true, projectId: true },
+        select: { id: true, projectId: true, kind: true },
       })
       for (const job of stale) {
         await db.researchJob.update({
@@ -28,6 +28,7 @@ export const sweepStaleJobs = inngest.createFunction(
           data: { status: "FAILED", error: "Research was interrupted. Retry to resume.", finishedAt: new Date() },
         })
         await emit(job.id, job.projectId, "failed", "Research was interrupted. Retry to resume.", "ERROR")
+        await restoreProjectStage(job.projectId, job.kind)
       }
       return { recovered: stale.length }
     })
