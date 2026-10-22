@@ -101,7 +101,7 @@ export async function persistCommercialResearch(job: JobContext, opportunityId: 
         },
       })
     }
-    const { claims: _claims, ...summary } = findings
+    const summary = { ...findings, claims: undefined } // claims are stored as rows
     await tx.opportunity.update({
       where: { id: opportunityId },
       data: { commercial: summary as Prisma.InputJsonValue, commercialAt: new Date() },

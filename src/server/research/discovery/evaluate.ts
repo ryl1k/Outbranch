@@ -18,16 +18,21 @@ For risk and uncertainty, a higher level means worse. Be critical; do not inflat
 
 const commercialSummary = commercialFindingsSchema.omit({ claims: true }).partial()
 
-/** Evidence counts used for the deterministic strength rating. */
-async function evidenceCounts(opportunityId: string) {
+/**
+ * Evidence counts used for the deterministic strength rating. Only claims
+ * researched for this opportunity count; brand-level facts show fit, not
+ * evidence that the opportunity itself holds up.
+ */
+export async function evidenceCounts(opportunityId: string) {
   const refs = await db.evidenceReference.findMany({
     where: { opportunityId },
-    include: { claim: { select: { status: true } } },
+    include: { claim: { select: { status: true, opportunityId: true } } },
   })
+  const own = refs.filter((r) => r.claim?.opportunityId === opportunityId && r.claim.status === "VERIFIED")
   return {
     qlooRelationships: refs.filter((r) => r.relationshipId).length,
-    verifiedClaims: refs.filter((r) => r.claim?.status === "VERIFIED" && r.role === "SUPPORTS").length,
-    contradictingClaims: refs.filter((r) => r.role === "CONTRADICTS" && r.claim?.status === "VERIFIED").length,
+    verifiedClaims: own.filter((r) => r.role === "SUPPORTS").length,
+    contradictingClaims: own.filter((r) => r.role === "CONTRADICTS").length,
   }
 }
 
