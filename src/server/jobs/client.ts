@@ -30,9 +30,9 @@ export function jobOptions(id: string) {
   return {
     id,
     retries: 2 as const,
-    concurrency: [
-      { limit: 2, key: "event.data.workspaceId" },
-      { limit: 6 },
+    concurrency: [{ limit: 2, key: "event.data.workspaceId" }, { limit: 6 }] as [
+      { limit: number; key: string },
+      { limit: number },
     ],
     cancelOn: [{ event: events.jobCancelled.name, match: "data.jobId" }],
   }
