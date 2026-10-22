@@ -9,6 +9,8 @@ export default defineConfig({
   testDir: "e2e",
   timeout: 60_000,
   fullyParallel: false,
+  // One worker: the dev server compiles routes on demand, so parallel runs race it.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {
