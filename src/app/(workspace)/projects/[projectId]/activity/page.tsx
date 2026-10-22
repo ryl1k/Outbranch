@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { UsageTable } from "@/components/workspace/usage-table"
-import { assertProjectAccess } from "@/server/auth/session"
+import { assertProjectReadAccess } from "@/server/auth/session"
 import { db } from "@/server/db"
 import { usageSummary } from "@/server/usage/summary"
 
@@ -31,7 +31,7 @@ function duration(start: Date | null, end: Date | null) {
 
 export default async function ActivityPage({ params }: PageProps<"/projects/[projectId]/activity">) {
   const { projectId } = await params
-  await assertProjectAccess(projectId)
+  await assertProjectReadAccess(projectId)
   const [jobs, usage] = await Promise.all([
     db.researchJob.findMany({
       where: { projectId },

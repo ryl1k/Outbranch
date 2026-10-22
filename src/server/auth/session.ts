@@ -49,6 +49,23 @@ export async function assertProjectAccess(projectId: string, viewer?: Viewer) {
   const project = await db.project.findFirst({
     where: { id: projectId, workspaceId: v.workspace.id },
   })
-  if (!project) throw new AuthError("Project not found", 404)
+  if (!project) {
+    const showcase = await db.project.count({ where: { id: projectId, isShowcase: true } })
+    if (showcase) throw new AuthError("Showcase projects are read-only. Start your own research to try this.", 403)
+    throw new AuthError("Project not found", 404)
+  }
   return { viewer: v, project }
+}
+
+/**
+ * Read-only access: the viewer's own projects plus published showcase projects.
+ * Mutations must keep using assertProjectAccess, which requires ownership.
+ */
+export async function assertProjectReadAccess(projectId: string, viewer?: Viewer) {
+  const v = viewer ?? (await assertViewer())
+  const project = await db.project.findFirst({
+    where: { id: projectId, OR: [{ workspaceId: v.workspace.id }, { isShowcase: true }] },
+  })
+  if (!project) throw new AuthError("Project not found", 404)
+  return { viewer: v, project, readOnly: project.workspaceId !== v.workspace.id }
 }

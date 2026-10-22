@@ -100,7 +100,7 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-ivory/25 bg-transparent px-6 text-base text-ivory hover:bg-ivory/10 hover:text-ivory">
-                <a href="#how-it-works">See how it works</a>
+                <Link href="/showcase">See a finished study</Link>
               </Button>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { DataModeBadge, EmptyState, PageHeader, StageBadge } from "@/components/workspace/primitives"
 import { ENTITY_KIND_LABELS, entityKindSchema } from "@/lib/schemas/brand"
 import { requireViewer } from "@/server/auth/session"
-import { listProjects } from "@/server/projects/queries"
+import { listProjects, listShowcases } from "@/server/projects/queries"
 
 export const metadata = { title: "Projects" }
 
@@ -12,7 +12,7 @@ const dateFmt = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", 
 
 export default async function ProjectsPage() {
   const viewer = await requireViewer()
-  const projects = await listProjects(viewer)
+  const [projects, showcases] = await Promise.all([listProjects(viewer), listShowcases(viewer)])
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-8 sm:py-10">
@@ -28,6 +28,25 @@ export default async function ProjectsPage() {
           </Button>
         }
       />
+
+      {showcases.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold">Explore a finished study</h2>
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {showcases.map((p) => (
+              <li key={p.id}>
+                <Link href={`/projects/${p.id}`} className="theme-dark group flex h-full flex-col rounded-xl bg-background p-5 text-foreground">
+                  <span className="text-xs text-rose">Showcase · read-only</span>
+                  <span className="mt-2 text-lg font-semibold group-hover:text-rose">{p.profile?.name ?? p.name}</span>
+                  <span className="mt-1 text-xs text-muted-foreground">
+                    {p._count.opportunities} ranked opportunities{p.profile?.industry ? ` in ${p.profile.industry}` : ""}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {projects.length === 0 ? (
         <EmptyState

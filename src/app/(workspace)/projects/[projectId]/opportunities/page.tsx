@@ -1,7 +1,7 @@
 import { Lightbulb } from "lucide-react"
 import { PortfolioView, RefineSheet } from "@/components/opportunities/portfolio-view"
 import { EmptyState } from "@/components/workspace/primitives"
-import { assertProjectAccess } from "@/server/auth/session"
+import { assertProjectReadAccess } from "@/server/auth/session"
 import { getOpportunityPortfolio } from "@/server/projects/queries"
 import { constraintsToConfig } from "@/server/projects/presenters"
 
@@ -9,7 +9,7 @@ export const metadata = { title: "Opportunities" }
 
 export default async function OpportunitiesPage({ params }: PageProps<"/projects/[projectId]/opportunities">) {
   const { projectId } = await params
-  await assertProjectAccess(projectId)
+  await assertProjectReadAccess(projectId)
   const portfolio = await getOpportunityPortfolio(projectId)
   const active = portfolio.opportunities.filter((o) => o.status === "CANDIDATE")
 

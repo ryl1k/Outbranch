@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/repo
   const { reportId } = await params
   try {
     const viewer = await assertViewer()
-    const report = await db.report.findFirst({ where: { id: reportId, project: { workspaceId: viewer.workspace.id } } })
+    const report = await db.report.findFirst({ where: { id: reportId, project: { OR: [{ workspaceId: viewer.workspace.id }, { isShowcase: true }] } } })
     if (!report) return Response.json({ error: "Not found" }, { status: 404 })
     return new Response(report.markdown, {
       headers: {

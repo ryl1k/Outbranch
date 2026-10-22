@@ -1,7 +1,7 @@
 import "server-only"
 import { culturalRefListSchema, collaborationListSchema, productListSchema, stringListSchema } from "@/lib/schemas/brand"
 import type { Viewer } from "@/server/auth/session"
-import { assertProjectAccess } from "@/server/auth/session"
+import { assertProjectReadAccess } from "@/server/auth/session"
 import { db } from "@/server/db"
 
 export async function listProjects(viewer: Viewer) {
@@ -16,13 +16,22 @@ export async function listProjects(viewer: Viewer) {
   })
 }
 
+export async function listShowcases(viewer: Viewer) {
+  return db.project.findMany({
+    where: { isShowcase: true, archivedAt: null, NOT: { workspaceId: viewer.workspace.id } },
+    orderBy: { updatedAt: "desc" },
+    take: 3,
+    include: { profile: { select: { name: true, industry: true } }, _count: { select: { opportunities: { where: { status: "CANDIDATE" } } } } },
+  })
+}
+
 export async function getProjectHeader(projectId: string) {
-  const { project } = await assertProjectAccess(projectId)
+  const { project, readOnly } = await assertProjectReadAccess(projectId)
   const [profile, latestJob] = await Promise.all([
     db.brandProfile.findUnique({ where: { projectId }, include: { qlooEntity: true } }),
     db.researchJob.findFirst({ where: { projectId }, orderBy: { createdAt: "desc" } }),
   ])
-  return { project, profile, latestJob }
+  return { project, profile, latestJob, readOnly }
 }
 
 export async function getCandidates(projectId: string) {

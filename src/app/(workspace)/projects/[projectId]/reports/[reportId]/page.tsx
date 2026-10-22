@@ -5,12 +5,12 @@ import remarkGfm from "remark-gfm"
 import { ArrowLeft } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
 import { ReportToolbar } from "@/components/reports/report-actions"
-import { assertProjectAccess } from "@/server/auth/session"
+import { assertProjectReadAccess } from "@/server/auth/session"
 import { db } from "@/server/db"
 
 export default async function ReportPage({ params }: PageProps<"/projects/[projectId]/reports/[reportId]">) {
   const { projectId, reportId } = await params
-  await assertProjectAccess(projectId)
+  await assertProjectReadAccess(projectId)
   const report = await db.report.findFirst({ where: { id: reportId, projectId } })
   if (!report) notFound()
 

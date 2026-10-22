@@ -1,4 +1,4 @@
-import { AuthError, assertProjectAccess } from "@/server/auth/session"
+import { AuthError, assertProjectReadAccess } from "@/server/auth/session"
 import { db } from "@/server/db"
 
 export const dynamic = "force-dynamic"
@@ -14,7 +14,7 @@ const MAX_STREAM_MS = 280_000
 export async function GET(request: Request, { params }: RouteContext<"/api/projects/[projectId]/events">) {
   const { projectId } = await params
   try {
-    await assertProjectAccess(projectId)
+    await assertProjectReadAccess(projectId)
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 500
     return Response.json({ error: "Not available" }, { status })

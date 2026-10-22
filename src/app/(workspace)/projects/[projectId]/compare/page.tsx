@@ -11,7 +11,7 @@ import {
   type OpportunityCategory,
 } from "@/lib/schemas/discovery"
 import { cn } from "@/lib/utils"
-import { assertProjectAccess } from "@/server/auth/session"
+import { assertProjectReadAccess } from "@/server/auth/session"
 import { ENTITY_TYPE_LABELS, type QlooEntityType } from "@/server/providers/qloo/types"
 import { getComparison, type Comparison } from "@/server/projects/queries"
 import { tasteOverlap } from "@/server/research/taste-overlap"
@@ -153,7 +153,7 @@ const GROUPS: { title: string; note: string; rows: Row[] }[] = [
 
 export default async function ComparePage({ params, searchParams }: PageProps<"/projects/[projectId]/compare">) {
   const { projectId } = await params
-  await assertProjectAccess(projectId)
+  await assertProjectReadAccess(projectId)
   const ids = String((await searchParams).ids ?? "").split(",").filter(Boolean)
   const { opportunities, all } = await getComparison(projectId, ids)
   if (opportunities.length < 2) {

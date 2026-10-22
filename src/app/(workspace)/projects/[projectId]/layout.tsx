@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { LogoMark } from "@/components/brand/logo"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: LayoutProps<"/projects/[proje
 
 export default async function ProjectLayout({ children, params }: LayoutProps<"/projects/[projectId]">) {
   const { projectId } = await params
-  const { project, profile } = await loadHeader(projectId)
+  const { project, profile, readOnly } = await loadHeader(projectId)
   const kind = entityKindSchema.safeParse(profile?.entityKind)
   const hasResults = project.stage === "READY" || project.stage === "DISCOVERING"
 
@@ -70,6 +71,19 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
           </div>
         </div>
       </header>
+      {readOnly && (
+        <div className="border-b bg-accent/60 print:hidden">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <span>
+              <strong className="font-semibold">Showcase project.</strong> A completed Outbranch study you can explore. It is
+              read-only.
+            </span>
+            <Link href="/projects/new" className="font-medium text-primary hover:underline">
+              Research your own brand
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 print:max-w-none print:p-0">{children}</div>
     </div>
   )

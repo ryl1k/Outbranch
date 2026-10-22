@@ -1,4 +1,4 @@
-import { AuthError, assertProjectAccess } from "@/server/auth/session"
+import { AuthError, assertProjectReadAccess } from "@/server/auth/session"
 import { loadCulturalGraph } from "@/server/graph/load"
 
 export const dynamic = "force-dynamic"
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 export async function GET(_request: Request, { params }: RouteContext<"/api/projects/[projectId]/graph">) {
   const { projectId } = await params
   try {
-    await assertProjectAccess(projectId)
+    await assertProjectReadAccess(projectId)
   } catch (error) {
     return Response.json({ error: "Not available" }, { status: error instanceof AuthError ? error.status : 500 })
   }
