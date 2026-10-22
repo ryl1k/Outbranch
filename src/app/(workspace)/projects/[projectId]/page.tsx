@@ -1,13 +1,14 @@
 import { AlertOctagon } from "lucide-react"
 import { AnalysisConfigForm } from "@/components/research/analysis-config-form"
 import { ConfirmedBrandCard } from "@/components/research/confirmed-brand-card"
+import { ProjectOverview } from "@/components/opportunities/project-overview"
 import { userContextSchema } from "@/lib/schemas/project"
 import { BrandVerification } from "@/components/research/brand-verification"
 import { CandidatePicker } from "@/components/research/candidate-picker"
 import { ResearchProgress } from "@/components/research/research-progress"
 import { RetryButton } from "@/components/research/retry-button"
 import { assertProjectAccess } from "@/server/auth/session"
-import { getBrandVerification, getCandidates, getJobTimeline } from "@/server/projects/queries"
+import { getBrandVerification, getCandidates, getJobTimeline, getOpportunityPortfolio } from "@/server/projects/queries"
 
 function serializeTimeline(jobs: Awaited<ReturnType<typeof getJobTimeline>>) {
   return {
@@ -109,6 +110,17 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
 
     case "DISCOVERING":
       return <div className="mx-auto max-w-3xl">{progress}</div>
+
+    case "READY": {
+      const portfolio = await getOpportunityPortfolio(projectId)
+      const active = timeline.jobs.some((j) => j.status === "QUEUED" || j.status === "RUNNING")
+      return (
+        <div className="space-y-8">
+          {active && progress}
+          <ProjectOverview projectId={projectId} portfolio={portfolio} />
+        </div>
+      )
+    }
 
     case "FAILED": {
       const lastError = [...timeline.events].reverse().find((e) => e.level === "ERROR")
