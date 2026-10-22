@@ -13,7 +13,7 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "inngest": "inngest-cli dev -u http://localhost:3000/api/inngest",
+    "inngest": "npx --yes inngest-cli@latest dev -u http://localhost:3000/api/inngest --no-discovery",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -24,6 +24,7 @@
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "cn": "^0.5.0",
+    "inngest": "^4.25.0",
     "lucide-react": "^1.61.0",
     "next": "16.4.2",
     "next-auth": "^5.0.0-beta.32",
