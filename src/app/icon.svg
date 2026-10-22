@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="g" x1="10" y1="40" x2="54" y2="16" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#F1D3DB"/><stop offset="1" stop-color="#D89AA8"/>
+    <linearGradient id="arm" x1="10" y1="45" x2="78" y2="11" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f6dfe4"/><stop offset="1" stop-color="#f9ecef"/>
+    </linearGradient>
+    <linearGradient id="low" x1="30" y1="47" x2="78" y2="74" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e7b9c4"/><stop offset="1" stop-color="#f9ecef"/>
+    </linearGradient>
+    <linearGradient id="petal" x1="44" y1="45" x2="100" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c4798b" stop-opacity="0.6"/><stop offset="1" stop-color="#e4a9b6"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="#1A0E14"/>
-  <g transform="translate(5 5) scale(0.84)" fill="url(#g)">
-    <path d="M19.52 32.31 Q16.52 46 6.03 50.97 A3.6 3.6 0 1 0 11.97 55.03 Q19.79 47.42 24.48 35.69 Z"/>
-    <path d="M23.57 35.82 Q38.94 27.94 49.23 21.05 A8 8 0 1 0 38.77 8.95 Q33.18 23.7 20.43 32.18 Z"/>
-    <path d="M22.16 36.39 Q38.88 36.87 52.57 40.48 A8.5 8.5 0 1 0 51.43 23.52 Q38.26 30.93 21.84 31.61 Z"/>
-    <path d="M20.49 35.87 Q32.84 43.06 38.28 56.83 A7.5 7.5 0 1 0 47.72 45.17 Q38.03 38.98 23.51 32.13 Z"/>
-    <circle cx="22" cy="34" r="4.6" fill="#F1D3DB"/>
+  <g transform="translate(7.5 10.5) scale(0.5)" fill="none" stroke-linecap="round">
+    <path d="M 44 44 C 60 43, 76 34.5, 92.6 34.3 A 8.3 8.3 0 0 1 92.6 50.9 C 76 50.9, 60 47.5, 44 46.6 Z" fill="url(#petal)"/>
+    <path d="M 30 46.5 C 45 48, 62 58, 77.8 74.1" stroke="url(#low)" stroke-width="14.8"/>
+    <path d="M 9.6 45.4 C 33 45, 55 37, 77.8 11.1" stroke="url(#arm)" stroke-width="14.8"/>
   </g>
 </svg>
