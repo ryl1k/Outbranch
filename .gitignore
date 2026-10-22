@@ -44,3 +44,6 @@ next-env.d.ts
 # private brief / reference assets
 prompt.md
 styles.png
+
+# local tooling output
+.playwright-mcp/
