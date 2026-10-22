@@ -14,7 +14,7 @@ function Stat({ label, value, hint }: { label: string; value: React.ReactNode; h
     <div className="rounded-xl border bg-card p-4">
       <p className="font-mono text-2xl font-medium">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{label}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-muted-foreground/80">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   )
 }

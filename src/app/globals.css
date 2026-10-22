@@ -21,10 +21,10 @@
   --brand-aubergine-800: #24131c;
   --brand-aubergine-700: #2f1823;
   --brand-rose: #d89aa8;
-  --brand-rose-600: #b46a7c; /* rose with AA contrast for text on light */
+  --brand-rose-600: #9a4e62; /* rose text: 4.7:1 on rose-soft, 5.2:1 on porcelain (AA) */
   --brand-rose-100: #f6e4e8;
   --brand-sage: #92a88f;
-  --brand-sage-700: #5d7459; /* sage with AA contrast for text on light */
+  --brand-sage-700: #4a6047; /* sage text: 5.7:1 on sage-soft, 6.2:1 on porcelain (AA) */
   --brand-sage-100: #e5ece3;
   --brand-ivory: #fbf7f2;
 }

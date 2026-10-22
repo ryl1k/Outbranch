@@ -52,10 +52,12 @@ export function SignalPreview() {
         <p className="text-sm text-ivory/60">
           Harbor &amp; Pine, an outdoor coffee roaster. <span className="rounded bg-rose/15 px-1.5 py-0.5 text-xs text-rose">Illustrative</span>
         </p>
-        <ul className="mt-5 space-y-2" role="tablist" aria-label="Cultural signals">
+        <div className="mt-5 flex flex-col gap-2" role="tablist" aria-label="Cultural signals" aria-orientation="vertical">
           {SIGNALS.map((s) => (
-            <li key={s.key}>
               <button
+                key={s.key}
+                id={`signal-tab-${s.key}`}
+                aria-controls="signal-panel"
                 type="button"
                 role="tab"
                 aria-selected={active === s.key}
@@ -68,12 +70,11 @@ export function SignalPreview() {
                 <span className="font-medium text-ivory">{s.signal}</span>
                 <span className="text-xs text-ivory/50">{s.domain}</span>
               </button>
-            </li>
           ))}
-        </ul>
+        </div>
       </div>
 
-      <div role="tabpanel" className="relative overflow-hidden rounded-2xl border border-ivory/10 bg-ivory/[0.03] p-6 sm:p-8">
+      <div role="tabpanel" id="signal-panel" aria-labelledby={`signal-tab-${current.key}`} className="relative overflow-hidden rounded-2xl border border-ivory/10 bg-ivory/[0.03] p-6 sm:p-8">
         <dl className="relative space-y-6">
           <div>
             <dt className="text-xs text-ivory/50">Shared taste with the brand’s audience</dt>
@@ -87,12 +88,12 @@ export function SignalPreview() {
             <dt className="text-xs text-ivory/50">How it makes money</dt>
             <dd className="mt-1 text-sm leading-relaxed text-ivory/80">{current.mechanism}</dd>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border border-rose/30 px-2.5 py-1 text-rose">Cultural evidence from Qloo</span>
-            <span className="rounded-full border border-sage/40 px-2.5 py-1 text-sage">Sourced market research</span>
-            <span className="rounded-full border border-ivory/20 px-2.5 py-1 text-ivory/70">Partner proposed, not confirmed</span>
-          </div>
         </dl>
+        <p className="relative mt-6 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-rose/30 px-2.5 py-1 text-rose">Cultural evidence from Qloo</span>
+          <span className="rounded-full border border-sage/40 px-2.5 py-1 text-sage">Sourced market research</span>
+          <span className="rounded-full border border-ivory/20 px-2.5 py-1 text-ivory/70">Partner proposed, not confirmed</span>
+        </p>
       </div>
     </div>
   )
