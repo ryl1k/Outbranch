@@ -1,7 +1,7 @@
 import { db } from "@/server/db"
 import { loadDiscoveryContext } from "@/server/research/discovery/context"
 import { persistCommercialResearch, researchOpportunity } from "@/server/research/discovery/commercial"
-import { gatherCulturalSignals, interpretCulture, loadSeeds, planDomains } from "@/server/research/discovery/cultural"
+import { gatherDomain, interpretCulture, loadSeeds, planDomains } from "@/server/research/discovery/cultural"
 import { evaluateOpportunities } from "@/server/research/discovery/evaluate"
 import { generateOpportunities } from "@/server/research/discovery/opportunities"
 import { events, inngest, jobOptions } from "../client"
@@ -49,7 +49,13 @@ export const discoveryJob = inngest.createFunction(
         return { outcome: "insufficient-evidence" }
       }
 
-      const cultural = await step.run("cultural-signals", async () => gatherCulturalSignals(job, await load(), plan, seeds))
+      // One durable step per domain: a slow or failing Qloo query only retries itself.
+      const cultural = { total: 0, failures: [] as string[] }
+      for (const domain of plan.domains) {
+        const res = await step.run(`qloo-${domain.type}`, async () => gatherDomain(job, await load(), domain.type, seeds))
+        cultural.total += res.count
+        if (!res.ok) cultural.failures.push(domain.type)
+      }
 
       // Every Qloo query failed or came back empty: generation would discard every
       // hypothesis for lack of evidence, so stop honestly instead of spending on it.

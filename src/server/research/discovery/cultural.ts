@@ -73,73 +73,83 @@ export async function planDomains(job: JobContext, ctx: DiscoveryContext): Promi
 const GEO_FILTER_DOMAINS = new Set(["urn:entity:place", "urn:entity:destination"])
 
 /**
- * Query Qloo per planned domain and persist each result as a cultural
- * relationship with full provenance (query, filters, explainability, time).
+ * Query Qloo for every planned domain. The discovery job calls gatherDomain once
+ * per domain as separate durable steps; this wrapper serves scripts and tests.
  */
 export async function gatherCulturalSignals(job: JobContext, ctx: DiscoveryContext, plan: DomainPlan, seeds: Seeds) {
+  let total = 0
+  const failures: string[] = []
+  for (const domain of plan.domains) {
+    const res = await gatherDomain(job, ctx, domain.type, seeds)
+    total += res.count
+    if (!res.ok) failures.push(domain.type)
+  }
+  return { total, failures }
+}
+
+/**
+ * Query Qloo for one domain and persist each result as a cultural relationship
+ * with full provenance (query, filters, explainability, time). Never throws for
+ * provider errors: a failed domain is reported and the run continues.
+ */
+export async function gatherDomain(job: JobContext, ctx: DiscoveryContext, domainType: string, seeds: Seeds) {
   const usage = job.usage("discovery.qloo")
   const region = ctx.config.regions[0]
   const byQlooId = new Map(seeds.entities.map((e) => [e.qlooId, e.id]))
-  let total = 0
-  const failures: string[] = []
-
-  for (const domain of plan.domains) {
-    const type = domain.type as QlooEntityType
-    await job.stage("cultural", `Querying Qloo for ${ENTITY_TYPE_LABELS[type].toLowerCase()}`)
-    const params: InsightsParams = {
-      "filter.type": type,
-      "signal.interests.entities": seeds.entities.map((e) => e.qlooId),
-      "signal.interests.tags": seeds.tags.map((t) => t.qlooId),
-      "filter.exclude.entities": seeds.entities.map((e) => e.qlooId),
-      "feature.explainability": true,
-      take: 12,
-    }
-    // Verified empirically: filter.location.* only applies to places and destinations;
-    // other domains are re-weighted geographically through signal.location.query.
-    if (region) {
-      if (GEO_FILTER_DOMAINS.has(type)) params["filter.location.query"] = region
-      else params["signal.location.query"] = region
-    }
-
-    try {
-      const res = await qloo.insights(usage, params)
-      const results = normalizeInsights(res.data.results.entities)
-      for (const r of results) {
-        const targetId = await upsertQlooEntity(r.entity, res.dataMode)
-        const top = [...r.explainability].sort((a, b) => b.score - a.score)[0]
-        const data = {
-          sourceEntityId: top ? (byQlooId.get(top.entityId) ?? null) : null,
-          sourceTagId: null,
-          domain: type,
-          affinity: r.affinity,
-          rank: r.rank,
-          explainability: { contributors: r.explainability, audienceGrowth: r.audienceGrowth } as Prisma.InputJsonValue,
-          filters: (region ? { region } : {}) as Prisma.InputJsonValue,
-          dataMode: res.dataMode,
-          retrievedAt: new Date(),
-        }
-        await db.culturalRelationship.upsert({
-          where: {
-            projectId_queryId_targetEntityId: { projectId: job.projectId, queryId: res.queryId, targetEntityId: targetId },
-          },
-          create: { projectId: job.projectId, queryId: res.queryId, targetEntityId: targetId, ...data },
-          update: data,
-        })
-      }
-      total += results.length
-      await job.note(
-        "cultural",
-        results.length
-          ? `${results.length} ${ENTITY_TYPE_LABELS[type].toLowerCase()} with cultural affinity${res.cached ? " (cached)" : ""}`
-          : `Qloo returned no ${ENTITY_TYPE_LABELS[type].toLowerCase()} for these signals`,
-        results.length ? "INFO" : "WARNING",
-      )
-    } catch (error) {
-      failures.push(type)
-      await job.note("cultural", `Qloo query for ${ENTITY_TYPE_LABELS[type]} failed: ${(error as Error).message}`, "WARNING")
-    }
+  const type = domainType as QlooEntityType
+  await job.stage("cultural", `Querying Qloo for ${ENTITY_TYPE_LABELS[type].toLowerCase()}`)
+  const params: InsightsParams = {
+    "filter.type": type,
+    "signal.interests.entities": seeds.entities.map((e) => e.qlooId),
+    "signal.interests.tags": seeds.tags.map((t) => t.qlooId),
+    "filter.exclude.entities": seeds.entities.map((e) => e.qlooId),
+    "feature.explainability": true,
+    take: 12,
   }
-  return { total, failures }
+  // Verified empirically: filter.location.* only applies to places and destinations;
+  // other domains are re-weighted geographically through signal.location.query.
+  if (region) {
+    if (GEO_FILTER_DOMAINS.has(type)) params["filter.location.query"] = region
+    else params["signal.location.query"] = region
+  }
+
+  try {
+    const res = await qloo.insights(usage, params)
+    const results = normalizeInsights(res.data.results.entities)
+    for (const r of results) {
+      const targetId = await upsertQlooEntity(r.entity, res.dataMode)
+      const top = [...r.explainability].sort((a, b) => b.score - a.score)[0]
+      const data = {
+        sourceEntityId: top ? (byQlooId.get(top.entityId) ?? null) : null,
+        sourceTagId: null,
+        domain: type,
+        affinity: r.affinity,
+        rank: r.rank,
+        explainability: { contributors: r.explainability, audienceGrowth: r.audienceGrowth } as Prisma.InputJsonValue,
+        filters: (region ? { region } : {}) as Prisma.InputJsonValue,
+        dataMode: res.dataMode,
+        retrievedAt: new Date(),
+      }
+      await db.culturalRelationship.upsert({
+        where: {
+          projectId_queryId_targetEntityId: { projectId: job.projectId, queryId: res.queryId, targetEntityId: targetId },
+        },
+        create: { projectId: job.projectId, queryId: res.queryId, targetEntityId: targetId, ...data },
+        update: data,
+      })
+    }
+    await job.note(
+      "cultural",
+      results.length
+        ? `${results.length} ${ENTITY_TYPE_LABELS[type].toLowerCase()} with cultural affinity${res.cached ? " (cached)" : ""}`
+        : `Qloo returned no ${ENTITY_TYPE_LABELS[type].toLowerCase()} for these signals`,
+      results.length ? "INFO" : "WARNING",
+    )
+    return { ok: true, count: results.length }
+  } catch (error) {
+    await job.note("cultural", `Qloo query for ${ENTITY_TYPE_LABELS[type]} failed: ${(error as Error).message}`, "WARNING")
+    return { ok: false, count: 0 }
+  }
 }
 
 /** Number the strongest relationships R1..Rn (by rank within their own query). */
