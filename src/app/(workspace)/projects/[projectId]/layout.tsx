@@ -30,7 +30,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
 
   return (
     <div>
-      <header className="border-b bg-card/50">
+      <header className="border-b bg-card/50 print:hidden">
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
@@ -70,7 +70,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">{children}</div>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 print:max-w-none print:p-0">{children}</div>
     </div>
   )
 }

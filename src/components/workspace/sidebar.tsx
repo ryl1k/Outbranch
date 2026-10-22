@@ -60,7 +60,7 @@ function ViewerCard({ viewer }: { viewer: ViewerSummary }) {
 
 export function Sidebar({ viewer, signOut }: { viewer: ViewerSummary; signOut: React.ReactNode }) {
   return (
-    <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 lg:flex">
+    <aside className="sticky top-0 hidden h-dvh w-60 print:hidden! shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 lg:flex">
       <Link href="/projects" className="px-2">
         <Logo className="text-xl" />
       </Link>
@@ -77,7 +77,7 @@ export function Sidebar({ viewer, signOut }: { viewer: ViewerSummary; signOut: R
 
 export function MobileNav({ viewer, signOut }: { viewer: ViewerSummary; signOut: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/90 print:hidden px-4 py-3 backdrop-blur lg:hidden">
       <Link href="/projects">
         <Logo className="text-lg" />
       </Link>

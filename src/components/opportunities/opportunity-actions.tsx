@@ -2,7 +2,8 @@
 
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Bookmark, BookmarkCheck, FileText, Loader2, Telescope } from "lucide-react"
+import { Bookmark, BookmarkCheck, Loader2, Telescope } from "lucide-react"
+import { GenerateReportButton } from "@/components/reports/report-actions"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { requestDeepDive, toggleShortlist } from "@/server/projects/actions"
@@ -42,11 +43,7 @@ export function OpportunityActions({
         {shortlisted ? <BookmarkCheck className="text-primary" /> : <Bookmark />}
         {shortlisted ? "Saved" : "Save"}
       </Button>
-      <Button asChild variant="outline">
-        <a href={`/projects/${projectId}/reports/new?opportunity=${opportunityId}`}>
-          <FileText /> Report
-        </a>
-      </Button>
+      <GenerateReportButton projectId={projectId} opportunityId={opportunityId} label="Brief" variant="outline" />
       <Button
         disabled={pending || researching}
         onClick={() => run(() => requestDeepDive(projectId, opportunityId), "Deep research started")}

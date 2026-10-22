@@ -10,6 +10,7 @@ import { assertProjectAccess, assertViewer } from "@/server/auth/session"
 import { db } from "@/server/db"
 import { enqueueJob, requestCancel } from "@/server/jobs/lifecycle"
 import { qlooMode } from "@/server/providers/qloo/client"
+import { buildReport } from "@/server/reports/build"
 import { rerank } from "@/server/research/discovery/evaluate"
 import { assertJobBudget, assertProjectBudget } from "@/server/security/rate-limit"
 import { runAction } from "./action-result"
@@ -307,5 +308,32 @@ export async function requestDeepDive(projectId: string, opportunityId: string) 
     await assertJobBudget(viewer.workspace.id)
     await enqueueJob({ projectId, workspaceId: viewer.workspace.id, kind: "DEEP_DIVE", opportunityId: opp.id })
     revalidatePath(`/projects/${projectId}/opportunities/${opportunityId}`)
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Reports
+// ---------------------------------------------------------------------------
+
+export async function createReport(projectId: string, opportunityId?: string) {
+  let reportId = ""
+  const result = await runAction(async () => {
+    await assertProjectAccess(id.parse(projectId))
+    if (opportunityId) await assertOpportunity(projectId, opportunityId)
+    const { title, markdown } = await buildReport(projectId, opportunityId ?? null)
+    const report = await db.report.create({
+      data: { projectId, opportunityId, kind: opportunityId ? "OPPORTUNITY" : "PROJECT", title, markdown },
+    })
+    reportId = report.id
+  })
+  if (result.ok) redirect(`/projects/${projectId}/reports/${reportId}`)
+  return result
+}
+
+export async function deleteReport(projectId: string, reportId: string) {
+  return runAction(async () => {
+    await assertProjectAccess(id.parse(projectId))
+    await db.report.deleteMany({ where: { id: id.parse(reportId), projectId } })
+    revalidatePath(`/projects/${projectId}/reports`)
   })
 }
