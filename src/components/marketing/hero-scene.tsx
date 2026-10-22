@@ -44,7 +44,8 @@ const PILL_X = 1300
 const PILL_W = 270
 const PILL_H = 62
 
-const NAMES = ["Your company", "Northwind Coffee", "Harbor & Pine", "Your next IP"]
+/** The demo researches "your company", then Outbranch itself. */
+const NAMES = ["Your company", "Outbranch"]
 
 type Phase = "typing" | "researching" | "mapping" | "branching" | "done" | "reset"
 

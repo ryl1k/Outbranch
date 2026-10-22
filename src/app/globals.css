@@ -305,3 +305,9 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+/* Travelling highlight along a drawn branch (pathLength=100, dasharray "6 94"). */
+@keyframes branch-pulse {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}

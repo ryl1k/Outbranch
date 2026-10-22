@@ -4,6 +4,9 @@ import { expect, test, type Page } from "@playwright/test"
 const SEED = "Simulated Harbor & Pine"
 
 async function audit(page: Page, label: string) {
+  // Let entrance animations and late requests finish so contrast is measured on the final state.
+  await page.waitForLoadState("networkidle")
+  await page.waitForTimeout(800)
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()
   const summary = results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.length} × ${v.nodes[0]?.html.slice(0, 160)}`)
   expect(summary, `${label} accessibility violations`).toEqual([])
