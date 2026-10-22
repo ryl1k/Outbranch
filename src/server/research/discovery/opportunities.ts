@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client"
 import { opportunityGenerationSchema, type GeneratedOpportunity } from "@/lib/schemas/discovery"
 import { db } from "@/server/db"
 import type { JobContext } from "@/server/jobs/lifecycle"
+import type { UsageContext } from "@/server/usage/record"
 import { generateStructured, untrusted } from "@/server/providers/anthropic/client"
 import { MODELS } from "@/server/providers/anthropic/models"
 import { dedupeKey, dedupeOpportunities, resolveAliases } from "../ranking"
@@ -25,12 +26,15 @@ Rules:
 
 export type GenerationResult = { opportunityIds: string[]; dropped: number }
 
-export async function generateOpportunities(
-  job: JobContext,
+/**
+ * Generate hypotheses without persisting them. `includeCultural: false` is the
+ * LLM-only arm of the Qloo ablation: identical inputs minus Qloo evidence.
+ */
+export async function draftOpportunities(
+  job: { projectId: string; usage: (operation: string) => UsageContext },
   ctx: DiscoveryContext,
-  opts: { includeCultural: boolean } = { includeCultural: true },
-): Promise<GenerationResult> {
-  await job.stage("generate", "Generating commercial hypotheses from the evidence")
+  opts: { includeCultural: boolean; includeHistory?: boolean },
+) {
   const [rels, claims, insights] = await Promise.all([
     opts.includeCultural ? relationshipTable(job.projectId) : null,
     claimTable(job.projectId),
@@ -40,7 +44,11 @@ export async function generateOpportunities(
   ])
   const insightAliases = new Map(insights.map((ins, i) => [`I${i + 1}`, ins.id]))
   const insightText = insights.map((ins, i) => `I${i + 1} ${ins.title}: ${ins.summary}`).join("\n")
-  const existing = await db.opportunity.findMany({ where: { projectId: job.projectId }, select: { title: true, status: true } })
+  // History is omitted in the ablation: earlier titles were produced with Qloo evidence.
+  const existing =
+    opts.includeHistory === false
+      ? []
+      : await db.opportunity.findMany({ where: { projectId: job.projectId }, select: { title: true, status: true } })
 
   const prompt = [
     brandBrief(ctx),
@@ -71,6 +79,16 @@ export async function generateOpportunities(
     prompt,
     effort: "high",
   })
+  return { opportunities: dedupeOpportunities(out.opportunities), rels, claims, insightAliases }
+}
+
+export async function generateOpportunities(
+  job: JobContext,
+  ctx: DiscoveryContext,
+  opts: { includeCultural: boolean } = { includeCultural: true },
+): Promise<GenerationResult> {
+  await job.stage("generate", "Generating commercial hypotheses from the evidence")
+  const { opportunities, rels, claims, insightAliases } = await draftOpportunities(job, ctx, opts)
 
   const excludedKeys = new Set(
     (await db.opportunity.findMany({ where: { projectId: job.projectId, status: "EXCLUDED" }, select: { dedupeKey: true } })).map(
@@ -80,7 +98,7 @@ export async function generateOpportunities(
 
   let dropped = 0
   const ids: string[] = []
-  for (const opp of dedupeOpportunities(out.opportunities)) {
+  for (const opp of opportunities) {
     const relIds = rels ? resolveAliases(opp.culturalEvidence, rels.aliases) : []
     const insIds = resolveAliases(opp.culturalEvidence, insightAliases)
     const claimIds = resolveAliases(opp.brandEvidence, claims.aliases)
