@@ -79,6 +79,8 @@ export function EvidenceStrands() {
             className={cn("absolute size-7 -translate-1/2 rounded-full border border-burgundy/30", on && !reduced && "animate-ping")}
             style={{ left: `${(MERGE.x / 190) * 100}%`, top: "50%", animationDuration: "2.4s" }}
           />
+          {/* Where the branch into the workflow section begins. */}
+          <span data-flow-start aria-hidden className="absolute top-1/2 right-0.5 size-px" />
         </div>
         <p className={cn("mt-1 text-center text-xs font-medium text-burgundy transition-opacity duration-500", on ? "opacity-100" : "opacity-0")} style={{ transitionDelay: on && !reduced ? "1300ms" : undefined }}>
           One evidence-backed

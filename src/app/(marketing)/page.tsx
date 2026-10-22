@@ -4,6 +4,7 @@ import { GithubIcon } from "@/components/brand/github-icon"
 import { Logo } from "@/components/brand/logo"
 import { CriteriaRail } from "@/components/marketing/criteria-rail"
 import { EvidenceStrands } from "@/components/marketing/evidence-strands"
+import { FlowConnector } from "@/components/marketing/flow-connector"
 import { HeroScene, HeroSceneCompact } from "@/components/marketing/hero-scene"
 import { InViewBranches } from "@/components/marketing/in-view-branches"
 import { Reveal } from "@/components/marketing/motion"
@@ -135,6 +136,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* One branch runs from the merged evidence into the workflow below. */}
+      <FlowConnector>
       <section className="mx-auto max-w-7xl px-4 py-24 sm:px-8 lg:py-32">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
           <Reveal as="h2" className="font-editorial text-4xl leading-tight text-balance text-aubergine sm:text-5xl">
@@ -152,7 +155,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="how-it-works" className="scroll-mt-8 overflow-hidden border-y border-aubergine/10 bg-card">
+      <section id="how-it-works" data-flow-lane className="scroll-mt-8 overflow-hidden border-y border-aubergine/10 bg-card">
         <div className="mx-auto max-w-7xl px-4 py-24 sm:px-8 lg:py-28">
           <Reveal as="h2" className="max-w-2xl font-heading text-3xl font-semibold tracking-tight text-aubergine sm:text-4xl">
             From a name to a ranked shortlist
@@ -162,6 +165,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </FlowConnector>
 
       <section className="theme-dark relative overflow-hidden bg-background">
         <InViewBranches className="absolute -right-40 bottom-0 h-full w-[60%] opacity-30" />

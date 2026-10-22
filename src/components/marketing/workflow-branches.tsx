@@ -13,7 +13,7 @@ const ROW_GAP_MS = 250
 
 /**
  * The workflow steps, connected by branches that grow out of the page frame.
- * Wide layouts: one trunk enters from the left edge and splits into an arm per
+ * Wide layouts: one trunk arrives down the left gutter and splits into an arm per
  * row that runs along the step markers. One column: a trunk runs down the left
  * with a twig to each step. Geometry comes from the real marker positions, so the
  * branches stay attached at every width and never cross the copy.
@@ -22,7 +22,7 @@ export function WorkflowBranches({ steps }: { steps: readonly (readonly [string,
   const { ref: frameRef, inView } = useInView<HTMLDivElement>({ threshold: 0.25 })
   const reduced = useReducedMotion()
   const markers = useRef<(HTMLSpanElement | null)[]>([])
-  const [geo, setGeo] = useState<{ w: number; h: number; left: number; points: Point[] } | null>(null)
+  const [geo, setGeo] = useState<{ w: number; h: number; points: Point[] } | null>(null)
 
   useLayoutEffect(() => {
     const frame = frameRef.current
@@ -33,7 +33,7 @@ export function WorkflowBranches({ steps }: { steps: readonly (readonly [string,
         const r = m!.getBoundingClientRect()
         return { x: r.left - box.left + r.width / 2, y: r.top - box.top + r.height / 2 }
       })
-      setGeo({ w: box.width, h: box.height, left: box.left, points })
+      setGeo({ w: box.width, h: box.height, points })
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -81,7 +81,8 @@ export function WorkflowBranches({ steps }: { steps: readonly (readonly [string,
       paths.push({ d: `M ${first.x} ${origin.y} L ${last.x} ${last.y}`, duration: ENTRY_MS * 0.6 + (steps.length - 1) * STEP_MS, delay: 0 })
     } else {
       const ys = rows.map((r) => geo.points[r[0]].y)
-      origin = { x: -geo.left, y: (ys[0] + ys[ys.length - 1]) / 2 }
+      // Split in the left gutter, where the branch from the section above arrives.
+      origin = { x: -16, y: (ys[0] + ys[ys.length - 1]) / 2 }
       rows.forEach((row, r) => {
         const first = geo.points[row[0]]
         const last = geo.points[row[row.length - 1]]
@@ -101,7 +102,7 @@ export function WorkflowBranches({ steps }: { steps: readonly (readonly [string,
         <svg className="pointer-events-none absolute inset-0 overflow-visible" width={geo.w} height={geo.h} aria-hidden>
           <defs>
             <linearGradient id="wf-branch" gradientUnits="userSpaceOnUse" x1={origin.x} x2={geo.w} y1="0" y2="0">
-              <stop offset="0" stopColor="#6B112E" stopOpacity="0.1" />
+              <stop offset="0" stopColor="#6B112E" stopOpacity="0.6" />
               <stop offset="0.35" stopColor="#6B112E" stopOpacity="0.6" />
               <stop offset="1" stopColor="#9a4e62" />
             </linearGradient>
@@ -140,6 +141,9 @@ export function WorkflowBranches({ steps }: { steps: readonly (readonly [string,
             <circle cx={origin.x} cy={origin.y} r={6} fill="#6B112E" opacity={play ? 1 : 0} className="transition-opacity duration-500" />
           )}
         </svg>
+      )}
+      {origin && !singleColumn && (
+        <span data-flow-end aria-hidden className="absolute size-px" style={{ left: origin.x, top: origin.y }} />
       )}
 
       <ol className="relative grid gap-y-12 pl-12 md:grid-cols-2 md:gap-x-12 md:gap-y-16 md:pl-16 lg:grid-cols-3 lg:pl-20">
