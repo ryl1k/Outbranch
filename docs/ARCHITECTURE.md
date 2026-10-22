@@ -28,9 +28,9 @@ Local: `docker compose up -d db` + `npx inngest-cli dev`.
 | 2. Brand research | confirmed entity + user context | `BrandProfile`, `ResearchSource`, `Claim` (verified / user / inferred / uncertain) | Claude Sonnet + web search/fetch |
 | — | **user verifies/edits profile** | `BrandProfile.status = CONFIRMED` | gate: discovery cannot start before this |
 | 3. Cultural research | profile themes, references | `QlooEntity`, `QlooTag` (resolved), `CulturalRelationship`, `CulturalInsight` | Qloo search, tags, insights; Claude plans which domains to query |
-| 4. Discovery | profile + cultural evidence + constraints | `Opportunity` (AI hypothesis), `EvidenceRef` links | Claude Sonnet / Opus, structured output |
+| 4. Discovery | profile + cultural evidence + constraints | `Opportunity` (AI hypothesis), `EvidenceRef` links | Claude Sonnet 5.5 (high effort), structured output |
 | 5. Commercial investigation | top candidates | `ResearchSource`, `Claim` per opportunity | Claude + web search |
-| 6. Evaluation | opportunity + evidence | `OpportunityEvaluation` (criteria, rationale, model-assessed vs measured) | Claude, deterministic ranking in TS |
+| 6. Evaluation | opportunity + evidence | `OpportunityEvaluation` (criteria, rationale, model-assessed vs measured) | Claude Sonnet 5.5, deterministic ranking in TS |
 | 7. Deep dive / report | opportunity | `Report` (markdown sections + sources) | Claude |
 
 Each step emits `ResearchEvent` rows (stage, message, timestamps) that the UI streams.

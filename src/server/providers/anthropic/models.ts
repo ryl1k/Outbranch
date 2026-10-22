@@ -3,8 +3,8 @@
  * models handle web research and simple extraction.
  */
 export const MODELS = {
-  /** opportunity discovery, evaluation, deep dives, reports */
-  reasoning: "claude-opus-5-5",
+  /** opportunity discovery, evaluation, deep dives, reports (Sonnet by project decision) */
+  reasoning: "claude-sonnet-5-5",
   /** web research with server-side search/fetch */
   research: "claude-sonnet-5-5",
   /** classification, normalization, short extraction */
@@ -14,7 +14,7 @@ export const MODELS = {
 export type ModelId = (typeof MODELS)[keyof typeof MODELS]
 
 /** First-party list prices, USD per million tokens (cached 2026-10). */
-const PRICES: Record<ModelId, { input: number; output: number; cacheRead: number }> = {
+const PRICES: Record<string, { input: number; output: number; cacheRead: number }> = {
   "claude-opus-5-5": { input: 4, output: 20, cacheRead: 0.2 },
   "claude-sonnet-5-5": { input: 2, output: 10, cacheRead: 0.2 },
   // Haiku cache-read price not published in our reference; bill at input price (upper bound).
@@ -31,7 +31,7 @@ export function estimateTokenCostUsd(
   model: string,
   usage: { input: number; output: number; cacheRead: number },
 ): number | null {
-  const price = PRICES[model as ModelId]
+  const price = PRICES[model]
   if (!price) return null
   return (
     (usage.input * price.input + usage.output * price.output + usage.cacheRead * price.cacheRead) /

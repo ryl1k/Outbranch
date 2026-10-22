@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { culturalRefListSchema } from "@/lib/schemas/brand"
+import { analysisConfigSchema, type AnalysisConfigInput } from "@/lib/schemas/discovery"
 import { createProjectSchema, projectNameFrom, type CreateProjectInput } from "@/lib/schemas/project"
 import { assertProjectAccess, assertViewer } from "@/server/auth/session"
 import { db } from "@/server/db"
 import { enqueueJob, requestCancel } from "@/server/jobs/lifecycle"
 import { qlooMode } from "@/server/providers/qloo/client"
+import { rerank } from "@/server/research/discovery/evaluate"
 import { assertJobBudget, assertProjectBudget } from "@/server/security/rate-limit"
 import { runAction } from "./action-result"
 
@@ -217,4 +219,83 @@ export async function archiveProject(projectId: string) {
   })
   if (result.ok) redirect("/projects")
   return result
+}
+
+// ---------------------------------------------------------------------------
+// Discovery
+// ---------------------------------------------------------------------------
+
+/** Start (or refine) discovery. Each run is a new constraints iteration linked to the previous one. */
+export async function startDiscovery(projectId: string, input: AnalysisConfigInput) {
+  return runAction(async () => {
+    const { viewer } = await assertProjectAccess(id.parse(projectId))
+    const config = analysisConfigSchema.parse(input)
+    const profile = await db.brandProfile.findUnique({ where: { projectId } })
+    if (profile?.status !== "CONFIRMED") {
+      throw new z.ZodError([{ code: "custom", message: "Confirm the brand profile before discovery", path: [] }])
+    }
+    await assertJobBudget(viewer.workspace.id)
+    const previous = await db.analysisConstraints.findFirst({ where: { projectId }, orderBy: { iteration: "desc" } })
+    const constraints = await db.analysisConstraints.create({
+      data: {
+        projectId,
+        iteration: (previous?.iteration ?? 0) + 1,
+        parentId: previous?.id,
+        focusCategories: config.focusCategories,
+        excludedCategories: config.excludedCategories,
+        regions: config.regions,
+        objectives: config.objectives,
+        budgetRange: config.budgetRange,
+        riskAppetite: config.riskAppetite,
+        notes: config.notes,
+      },
+    })
+    await db.project.update({ where: { id: projectId }, data: { stage: "DISCOVERING" } })
+    await enqueueJob({ projectId, workspaceId: viewer.workspace.id, kind: "DISCOVERY", constraintsId: constraints.id })
+    revalidatePath(`/projects/${projectId}`)
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio actions
+// ---------------------------------------------------------------------------
+
+async function assertOpportunity(projectId: string, opportunityId: string) {
+  await assertProjectAccess(id.parse(projectId))
+  const opp = await db.opportunity.findFirst({ where: { id: id.parse(opportunityId), projectId } })
+  if (!opp) throw new z.ZodError([{ code: "custom", message: "Opportunity not found", path: [] }])
+  return opp
+}
+
+export async function toggleShortlist(projectId: string, opportunityId: string, add: boolean) {
+  return runAction(async () => {
+    await assertOpportunity(projectId, opportunityId)
+    const shortlist = await db.shortlist.upsert({
+      where: { projectId_name: { projectId, name: "Shortlist" } },
+      create: { projectId },
+      update: {},
+    })
+    if (add) {
+      await db.shortlistItem.upsert({
+        where: { shortlistId_opportunityId: { shortlistId: shortlist.id, opportunityId } },
+        create: { shortlistId: shortlist.id, opportunityId },
+        update: {},
+      })
+    } else {
+      await db.shortlistItem.deleteMany({ where: { shortlistId: shortlist.id, opportunityId } })
+    }
+    revalidatePath(`/projects/${projectId}`, "layout")
+  })
+}
+
+export async function setOpportunityExcluded(projectId: string, opportunityId: string, excluded: boolean) {
+  return runAction(async () => {
+    await assertOpportunity(projectId, opportunityId)
+    await db.opportunity.update({
+      where: { id: opportunityId },
+      data: { status: excluded ? "EXCLUDED" : "CANDIDATE", ...(excluded ? { rank: null } : {}) },
+    })
+    await rerank(projectId)
+    revalidatePath(`/projects/${projectId}`, "layout")
+  })
 }

@@ -16,7 +16,8 @@ import {
   type InsightsParams,
 } from "./types"
 
-const TIMEOUT_MS = 20_000
+/** Insights with explainability over several seeds can legitimately take 20s+. */
+const TIMEOUT_MS = 45_000
 const MAX_RETRIES = 2
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 

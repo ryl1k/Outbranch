@@ -464,6 +464,8 @@ model Opportunity {
   evidenceStrength EvidenceStrength    @default(LIMITED)
   rank             Int?
   dedupeKey        String
+  commercial       Json? // structured commercial investigation findings
+  commercialAt     DateTime?
   deepDive         Json? // structured deep-dive sections when researched
   deepDiveAt       DateTime?
   createdAt        DateTime            @default(now())

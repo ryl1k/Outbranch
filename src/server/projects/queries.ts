@@ -67,3 +67,48 @@ export async function getBrandVerification(projectId: string) {
 }
 
 export type BrandVerification = NonNullable<Awaited<ReturnType<typeof getBrandVerification>>>
+
+// ---------------------------------------------------------------------------
+// Opportunities
+// ---------------------------------------------------------------------------
+
+export async function getOpportunityPortfolio(projectId: string) {
+  const [opportunities, latestConstraints, shortlist, insights, relationshipCount, lastDiscovery] = await Promise.all([
+    db.opportunity.findMany({
+      where: { projectId },
+      orderBy: [{ status: "asc" }, { rank: "asc" }],
+      include: {
+        evaluations: { orderBy: { createdAt: "desc" }, take: 1 },
+        evidence: {
+          include: {
+            relationship: { include: { targetEntity: true } },
+            claim: { select: { status: true } },
+          },
+        },
+        _count: { select: { claims: true } },
+      },
+    }),
+    db.analysisConstraints.findFirst({ where: { projectId }, orderBy: { iteration: "desc" } }),
+    db.shortlist.findFirst({ where: { projectId }, include: { items: true } }),
+    db.culturalInsight.findMany({ where: { projectId }, orderBy: { createdAt: "asc" } }),
+    db.culturalRelationship.count({ where: { projectId } }),
+    db.researchJob.findFirst({ where: { projectId, kind: "DISCOVERY" }, orderBy: { createdAt: "desc" }, include: { events: { where: { level: { in: ["WARNING", "ERROR"] } } } } }),
+  ])
+  const shortlisted = new Set(shortlist?.items.map((i) => i.opportunityId) ?? [])
+  return {
+    opportunities: opportunities.map((o) => ({
+      ...o,
+      shortlisted: shortlisted.has(o.id),
+      qlooEntities: o.evidence.flatMap((e) => (e.relationship ? [e.relationship.targetEntity] : [])),
+      qlooEvidenceCount: o.evidence.filter((e) => e.relationshipId || e.insightId).length,
+      contradicting: o.evidence.filter((e) => e.role === "CONTRADICTS").length,
+    })),
+    latestConstraints,
+    insights,
+    relationshipCount,
+    lastDiscovery,
+  }
+}
+
+export type Portfolio = Awaited<ReturnType<typeof getOpportunityPortfolio>>
+export type PortfolioOpportunity = Portfolio["opportunities"][number]

@@ -1,4 +1,7 @@
 import { AlertOctagon } from "lucide-react"
+import { AnalysisConfigForm } from "@/components/research/analysis-config-form"
+import { ConfirmedBrandCard } from "@/components/research/confirmed-brand-card"
+import { userContextSchema } from "@/lib/schemas/project"
 import { BrandVerification } from "@/components/research/brand-verification"
 import { CandidatePicker } from "@/components/research/candidate-picker"
 import { ResearchProgress } from "@/components/research/research-progress"
@@ -67,6 +70,45 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
       if (!data) return progress
       return <BrandVerification projectId={projectId} data={data} />
     }
+
+    case "CONFIGURING": {
+      const data = await getBrandVerification(projectId)
+      const ctx = userContextSchema.catch({}).parse(project.userContext ?? {})
+      const stoppedEarly = timeline.events.findLast((e) => e.stage === "cultural" && e.level === "ERROR")
+      return (
+        <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
+          {data && <ConfirmedBrandCard projectId={projectId} data={data} />}
+          <section className="space-y-6">
+            <div className="space-y-1.5">
+              <p className="eyebrow">Analysis configuration</p>
+              <h2 className="text-xl font-semibold">Where should Outbranch look?</h2>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                Outbranch plans which cultural domains to query in Qloo, turns the strongest relationships into
+                commercial hypotheses, investigates the top ones and ranks them on explicit criteria.
+              </p>
+            </div>
+            {stoppedEarly && (
+              <p className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
+                {stoppedEarly.message}
+              </p>
+            )}
+            <div className="rounded-xl border bg-card p-5 shadow-soft sm:p-6">
+              <AnalysisConfigForm
+                projectId={projectId}
+                initial={{
+                  excludedCategories: ctx.excludedCategories?.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 10),
+                  objectives: ctx.objectives,
+                  budgetRange: ctx.budgetRange,
+                }}
+              />
+            </div>
+          </section>
+        </div>
+      )
+    }
+
+    case "DISCOVERING":
+      return <div className="mx-auto max-w-3xl">{progress}</div>
 
     case "FAILED": {
       const lastError = [...timeline.events].reverse().find((e) => e.level === "ERROR")
