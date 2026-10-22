@@ -1,11 +1,12 @@
 import Link from "next/link"
-import { ArrowRight, BadgeCheck, CircleHelp, Compass, Lightbulb, Radar, Sprout } from "lucide-react"
+import { ArrowRight, BadgeCheck, Play, CircleHelp, Compass, Lightbulb, Radar, Sprout } from "lucide-react"
 import { GithubIcon } from "@/components/brand/github-icon"
 import { Logo } from "@/components/brand/logo"
 import { CriteriaRail } from "@/components/marketing/criteria-rail"
 import { EvidenceStrands } from "@/components/marketing/evidence-strands"
 import { FlowConnector } from "@/components/marketing/flow-connector"
 import { HeroScene, HeroSceneCompact } from "@/components/marketing/hero-scene"
+import { MountainScene } from "@/components/marketing/mountain-scene"
 import { InViewBranches } from "@/components/marketing/in-view-branches"
 import { Reveal } from "@/components/marketing/motion"
 import { WorkflowBranches } from "@/components/marketing/workflow-branches"
@@ -85,39 +86,64 @@ function Nav() {
 export default function LandingPage() {
   return (
     <div className="bg-porcelain">
-      <section className="theme-dark relative overflow-hidden bg-background text-foreground">
-        <HeroScene className="absolute inset-y-0 left-0 hidden h-full w-[calc(100%-max(0px,(100%-80rem)/2))] xl:block" />
-        {/* Keeps the headline legible over the converging streams. */}
+      <section className="theme-dark relative flex min-h-[max(640px,min(100svh,900px))] flex-col overflow-hidden bg-background text-foreground">
+        {/* Phones: the mountain sits under the copy. Wider: it fills the hero behind it. */}
+        <MountainScene className="order-last mt-2 ml-[-40%] h-[420px] w-[150%] shrink-0 [mask-image:linear-gradient(to_bottom,transparent,black_35%)] md:absolute md:inset-0 md:order-none md:m-0 md:h-full md:w-full md:[mask-image:none]" />
         <div
-          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(26_14_20/0.94)_0%,rgb(26_14_20/0.78)_30%,rgb(26_14_20/0.25)_44%,transparent_54%)] xl:block"
+          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(26_14_20/0.92)_0%,rgb(26_14_20/0.7)_32%,rgb(26_14_20/0.1)_55%,transparent_68%)] md:block"
           aria-hidden
         />
-        <div className="relative">
+        <div className="relative z-10">
           <Nav />
         </div>
-        <div className="relative mx-auto flex min-h-[560px] max-w-7xl flex-col justify-center px-4 pt-6 pb-10 sm:px-8 xl:min-h-[min(80vh,780px)] xl:pb-24">
-          <div className="max-w-2xl">
-            <h1 className="animate-rise font-editorial text-[clamp(3rem,6.2vw,5.75rem)] leading-[0.98] text-ivory sm:whitespace-nowrap">
-              See further.
-              <br />
-              <span className="text-rose">Grow smarter.</span>
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-4 pt-8 sm:px-8 md:pb-24">
+          <div className="max-w-xl">
+            <p className="animate-rise text-xs font-medium tracking-[0.18em] text-rose uppercase">Cultural intelligence for real growth</p>
+            <h1 className="mt-5 animate-rise font-editorial text-[clamp(2.75rem,5.4vw,5rem)] leading-[1.02] text-balance text-ivory [animation-delay:100ms]">
+              Turn cultural signals into <span className="text-rose">what’s next.</span>
             </h1>
-            <p className="mt-7 max-w-md animate-rise text-lg leading-relaxed text-ivory/75 [animation-delay:150ms]">
-              Outbranch transforms cultural intelligence into real growth opportunities for your brand, company, or IP.
+            <p className="mt-6 max-w-md animate-rise text-lg leading-relaxed text-ivory/75 [animation-delay:200ms]">
+              Outbranch helps brands, companies and entertainment IP discover new markets, partners and revenue opportunities through cultural
+              intelligence.
             </p>
-            <div className="mt-9 animate-rise [animation-delay:300ms]">
+            <div className="mt-9 flex animate-rise flex-wrap gap-3 [animation-delay:300ms]">
               <Button asChild size="lg" className="h-12 rounded-full px-6 text-base">
                 <Link href="/projects/new">
                   Explore opportunities <ArrowRight />
                 </Link>
               </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-ivory/30 bg-transparent px-6 text-base text-ivory hover:bg-ivory/10">
+                <a href="#demo">
+                  <Play /> See how it works
+                </a>
+              </Button>
             </div>
           </div>
-          <HeroScene
-            mode="inline"
-            className="mt-6 hidden h-auto w-full [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,black_24%),linear-gradient(to_bottom,transparent,black_6%,black_92%,transparent)] md:block xl:hidden"
-          />
-          <HeroSceneCompact className="mt-8 w-full md:hidden" />
+        </div>
+      </section>
+
+      <section id="demo" className="theme-dark relative scroll-mt-8 overflow-hidden border-t border-ivory/10 bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-4 pt-20 pb-6 sm:px-8 lg:pt-28">
+          <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,24rem)_1fr] lg:gap-4">
+            <div>
+              <Reveal as="h2" className="font-editorial text-4xl leading-tight text-balance text-ivory sm:text-5xl">
+                See further. Grow smarter.
+              </Reveal>
+              <Reveal as="p" delay={120} className="mt-5 max-w-sm text-lg leading-relaxed text-ivory/70">
+                Type a name and that is the whole start. Outbranch researches it, maps whose taste its audience shares and comes back with
+                growth paths you can trace to evidence.
+              </Reveal>
+            </div>
+            <div className="relative hidden md:block">
+              <HeroScene mode="inline" className="block h-auto w-full" />
+              {/* Fades the cropped scene into the section instead of ending on a hard edge. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-px bg-[linear-gradient(to_right,rgb(26_14_20)_2%,transparent_30%),linear-gradient(to_bottom,rgb(26_14_20),transparent_20%,transparent_80%,rgb(26_14_20))]"
+              />
+            </div>
+            <HeroSceneCompact className="w-full md:hidden" />
+          </div>
         </div>
         <div className="relative border-t border-ivory/10">
           <ul className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-8">

@@ -17,10 +17,10 @@ async function openSeededStudy(page: Page) {
 
 test("landing page communicates the product and leads to research", async ({ page }) => {
   await page.goto("/")
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("See further.")
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Grow smarter.")
-  // The hero demo types a company name, then lights up its growth paths.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Turn cultural signals into what’s next.")
+  // Below the hero, the demo starts once it scrolls into view: it types a company name, then lights up its growth paths.
   const demo = page.getByRole("group", { name: /Animated demo/ })
+  await demo.scrollIntoViewIfNeeded()
   await expect(demo.getByText("4 growth paths found")).toBeVisible({ timeout: 20_000 })
   await expect(demo.getByRole("link", { name: /Strategic partners/ })).toBeVisible()
   await page.getByRole("link", { name: "Explore opportunities" }).first().click()

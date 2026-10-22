@@ -320,3 +320,9 @@
   from { transform: scaleY(0); }
   to { transform: scaleY(1); }
 }
+
+/* Slow sideways drift for the hero's valley mist. */
+@keyframes drift {
+  from { transform: translateX(-40px); }
+  to { transform: translateX(40px); }
+}

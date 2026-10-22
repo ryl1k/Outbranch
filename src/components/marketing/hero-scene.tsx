@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useId, useState, useSyncExternalStore } from "react"
+import { useEffect, useId, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, BarChart3, Globe2, Package, Search, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useInView, useReducedMotion } from "./motion"
 
 /** Scene coordinates (viewBox 1600×900). */
 const O = { x: 1000, y: 450 }
@@ -75,21 +76,8 @@ function branch(y: number) {
   return `M ${O.x} ${O.y} C ${O.x + 150} ${O.y}, ${PILL_X - 170} ${y}, ${PILL_X + 10} ${y}`
 }
 
-const reducedMotionQuery = "(prefers-reduced-motion: reduce)"
-function useReducedMotion() {
-  return useSyncExternalStore(
-    (cb) => {
-      const mq = window.matchMedia(reducedMotionQuery)
-      mq.addEventListener("change", cb)
-      return () => mq.removeEventListener("change", cb)
-    },
-    () => window.matchMedia(reducedMotionQuery).matches,
-    () => false,
-  )
-}
-
-/** Drives the demo loop: type a name, research it, then grow the branches. */
-function useDemo(reduced: boolean) {
+/** Drives the demo loop: type a name, research it, then grow the branches. Waits until `active`. */
+function useDemo(reduced: boolean, active: boolean) {
   const [nameIndex, setNameIndex] = useState(0)
   const [typed, setTyped] = useState(0)
   const [phase, setPhase] = useState<Phase>("typing")
@@ -97,7 +85,7 @@ function useDemo(reduced: boolean) {
   const name = NAMES[nameIndex]
 
   useEffect(() => {
-    if (reduced) return
+    if (reduced || !active) return
     let t: ReturnType<typeof setTimeout>
     if (phase === "typing") {
       t = typed < name.length ? setTimeout(() => setTyped((n) => n + 1), 85) : setTimeout(() => setPhase("researching"), 500)
@@ -118,19 +106,21 @@ function useDemo(reduced: boolean) {
       }, 700)
     }
     return () => clearTimeout(t)
-  }, [phase, typed, lit, name.length, reduced])
+  }, [phase, typed, lit, name.length, reduced, active])
 
   if (reduced) return { text: NAMES[0], phase: "done" as Phase, lit: DESTINATIONS.length, typing: false }
   return { text: name.slice(0, typed), phase, lit: phase === "reset" ? 0 : lit, typing: phase === "typing" }
 }
 
-function useScene() {
+function useScene<T extends Element>() {
   const reduced = useReducedMotion()
-  const demo = useDemo(reduced)
+  const { ref, inView } = useInView<T>({ threshold: 0.35 })
+  const demo = useDemo(reduced, inView)
   // Ids are per instance: a hidden copy of the scene must not own the gradients another copy uses.
   const uid = `hs${useId().replace(/:/g, "")}`
   return {
     ...demo,
+    ref,
     reduced,
     uid,
     flowing: demo.phase === "researching" || demo.phase === "mapping",
@@ -275,11 +265,12 @@ function Capsule({ text, typing, phase, size = "lg" }: { text: string; typing: b
  * "background" fills the hero behind the copy; "inline" sits below it, cropped to the origin.
  */
 export function HeroScene({ className, mode = "background" }: { className?: string; mode?: "background" | "inline" }) {
-  const { text, phase, lit, typing, reduced, uid, flowing, charged } = useScene()
+  const { ref, text, phase, lit, typing, reduced, uid, flowing, charged } = useScene<SVGSVGElement>()
   const [hovered, setHovered] = useState<string | null>(null)
 
   return (
     <svg
+      ref={ref}
       viewBox={mode === "background" ? "0 0 1600 900" : "520 110 1080 640"}
       preserveAspectRatio={mode === "background" ? "xMaxYMid slice" : "xMidYMid meet"}
       className={cn("select-none", className)}
@@ -328,10 +319,10 @@ export function HeroScene({ className, mode = "background" }: { className?: stri
 
 /** Phone layout: the converging origin on top, then the typed name and the growth paths as a list. */
 export function HeroSceneCompact({ className }: { className?: string }) {
-  const { text, phase, lit, typing, reduced, uid, flowing, charged } = useScene()
+  const { ref, text, phase, lit, typing, reduced, uid, flowing, charged } = useScene<HTMLDivElement>()
   const spread = [-0.62, -0.2, 0.2, 0.62]
   return (
-    <div className={cn("select-none", className)}>
+    <div ref={ref} className={cn("select-none", className)}>
       <svg
         viewBox="560 250 600 400"
         className="-mx-4 h-auto w-[calc(100%+2rem)] [mask-image:radial-gradient(ellipse_at_60%_50%,black_45%,transparent_78%)]"
