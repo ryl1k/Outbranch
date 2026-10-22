@@ -9,7 +9,16 @@ function curve(y: number, spread: number) {
   return `M${x} ${oy} C ${x + 260} ${oy}, ${x + 320 + spread} ${y}, 1000 ${y}`
 }
 
-export function BranchLines({ className, animated = true }: { className?: string; animated?: boolean }) {
+export function BranchLines({
+  className,
+  animated = true,
+  showOrigin = true,
+}: {
+  className?: string
+  animated?: boolean
+  /** Background uses hide the origin ring so it never lands on content. */
+  showOrigin?: boolean
+}) {
   return (
     <svg
       viewBox="0 0 1000 800"
@@ -45,8 +54,12 @@ export function BranchLines({ className, animated = true }: { className?: string
           className={animated ? "animate-draw-path" : undefined}
         />
       ))}
-      <circle cx={ORIGIN.x} cy={ORIGIN.y} r="7" fill="#F8F3EE" />
-      <circle cx={ORIGIN.x} cy={ORIGIN.y} r="15" stroke="#F8F3EE" strokeOpacity="0.5" strokeWidth="1.5" />
+      {showOrigin && (
+        <>
+          <circle cx={ORIGIN.x} cy={ORIGIN.y} r="7" fill="#F8F3EE" />
+          <circle cx={ORIGIN.x} cy={ORIGIN.y} r="15" stroke="#F8F3EE" strokeOpacity="0.5" strokeWidth="1.5" />
+        </>
+      )}
     </svg>
   )
 }

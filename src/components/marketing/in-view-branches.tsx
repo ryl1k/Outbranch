@@ -9,7 +9,7 @@ export function InViewBranches({ className }: { className?: string }) {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.15 })
   return (
     <div ref={ref} className={cn("pointer-events-none", className)} aria-hidden>
-      {inView && <BranchLines className="h-full w-full" />}
+      {inView && <BranchLines className="h-full w-full" showOrigin={false} />}
     </div>
   )
 }

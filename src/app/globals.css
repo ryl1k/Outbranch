@@ -311,3 +311,12 @@
   from { stroke-dashoffset: 100; }
   to { stroke-dashoffset: 0; }
 }
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
