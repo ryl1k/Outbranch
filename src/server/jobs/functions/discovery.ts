@@ -77,7 +77,19 @@ export const discoveryJob = inngest.createFunction(
       await step.run("cultural-insights", async () => interpretCulture(job, await load()))
       const generated = await step.run("generate", async () => generateOpportunities(job, await load()))
 
-      const toInvestigate = generated.opportunityIds.slice(0, INVESTIGATE_TOP)
+      // Preliminary evaluation decides which hypotheses deserve commercial research,
+      // so the best-ranked ideas are also the best-researched ones.
+      await step.run("evaluate-preliminary", async () => evaluateOpportunities(job, await load(), generated.opportunityIds))
+      const toInvestigate = await step.run("select-for-investigation", async () =>
+        (
+          await db.opportunity.findMany({
+            where: { id: { in: generated.opportunityIds }, status: "CANDIDATE" },
+            orderBy: { rank: "asc" },
+            take: INVESTIGATE_TOP,
+            select: { id: true },
+          })
+        ).map((o) => o.id),
+      )
       if (toInvestigate.length) {
         await step.run("commercial-start", () =>
           job.stage("commercial", `Investigating the commercial case for the top ${toInvestigate.length} hypotheses`),
@@ -95,7 +107,10 @@ export const discoveryJob = inngest.createFunction(
       )
       const failedInvestigations = investigations.filter((ok) => !ok).length
 
-      await step.run("evaluate", async () => evaluateOpportunities(job, await load(), generated.opportunityIds))
+      const investigated = toInvestigate.filter((_, i) => investigations[i])
+      if (investigated.length) {
+        await step.run("evaluate", async () => evaluateOpportunities(job, await load(), investigated))
+      }
 
       await step.run("finish", async () => {
         const partial = failedInvestigations > 0 || cultural.failures.length > 0
