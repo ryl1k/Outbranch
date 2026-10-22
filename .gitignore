@@ -47,3 +47,5 @@ styles.png
 
 # local tooling output
 .playwright-mcp/
+
+/src/generated/prisma

@@ -19,7 +19,7 @@ Auth.js · Inngest · Anthropic SDK · Qloo Insights API · React Flow · Rechar
 
 ```bash
 cp .env.example .env          # fill in ANTHROPIC_API_KEY, QLOO_API_KEY, AUTH_SECRET
-docker compose up -d db       # Postgres on :5432
+docker compose up -d db       # Postgres on :5442
 npm install
 npm run dev                   # http://localhost:3000
 ```

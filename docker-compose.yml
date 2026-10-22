@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: outbranch
       POSTGRES_DB: outbranch
     ports:
-      - "5432:5432"
+      - "5442:5432"
     volumes:
       - outbranch-pg:/var/lib/postgresql/data
     healthcheck:
