@@ -13,5 +13,7 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     environment: "node",
     setupFiles: ["tests/helpers/setup.ts"],
+    // Integration tests share one Postgres database, so files run one at a time.
+    fileParallelism: false,
   },
 })
