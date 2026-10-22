@@ -18,6 +18,15 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // Outbranch semantic variants
+        accent: "bg-accent text-accent-foreground",
+        rose: "bg-rose-soft text-rose-strong",
+        sage: "bg-sage-soft text-sage-strong",
+        success: "bg-success-soft text-success",
+        warning: "bg-warning-soft text-warning",
+        danger: "bg-destructive-soft text-destructive",
+        info: "bg-info-soft text-info",
+        muted: "bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {
