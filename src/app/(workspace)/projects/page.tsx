@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, FolderSearch, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DeleteProjectButton } from "@/components/workspace/delete-project-button"
 import { DataModeBadge, EmptyState, PageHeader, StageBadge } from "@/components/workspace/primitives"
 import { ENTITY_KIND_LABELS, entityKindSchema } from "@/lib/schemas/brand"
 import { requireViewer } from "@/server/auth/session"
@@ -66,7 +67,7 @@ export default async function ProjectsPage() {
           {projects.map((p) => {
             const kind = entityKindSchema.safeParse(p.profile?.entityKind)
             return (
-              <li key={p.id}>
+              <li key={p.id} className="relative">
                 <Link
                   href={`/projects/${p.id}`}
                   className="group flex h-full flex-col rounded-xl border bg-card p-5 shadow-soft transition-colors hover:border-border-strong"
@@ -84,7 +85,7 @@ export default async function ProjectsPage() {
                     </div>
                     <StageBadge stage={p.stage} />
                   </div>
-                  <div className="mt-auto flex items-center justify-between gap-2 pt-6 text-xs text-muted-foreground">
+                  <div className="mt-auto flex items-center justify-between gap-2 pr-9 pt-6 text-xs text-muted-foreground">
                     <span>
                       {p._count.opportunities > 0
                         ? `${p._count.opportunities} opportunities`
@@ -93,6 +94,11 @@ export default async function ProjectsPage() {
                     <DataModeBadge mode={p.dataMode} />
                   </div>
                 </Link>
+                <DeleteProjectButton
+                  projectId={p.id}
+                  name={p.profile?.name ?? p.name}
+                  className="absolute bottom-2 right-2 size-8 text-muted-foreground hover:text-destructive"
+                />
               </li>
             )
           })}

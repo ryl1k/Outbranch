@@ -57,6 +57,20 @@ export async function selectCandidate(projectId: string, candidateId: string) {
   })
 }
 
+/** Permanently remove a project and, through cascading relations, everything researched under it. */
+export async function deleteProject(projectId: string) {
+  return runAction(async () => {
+    const { project } = await assertProjectAccess(id.parse(projectId))
+    const active = await db.researchJob.findMany({
+      where: { projectId: project.id, status: { in: ["QUEUED", "RUNNING"] } },
+      select: { id: true },
+    })
+    for (const job of active) await requestCancel(job.id)
+    await db.project.delete({ where: { id: project.id } })
+    revalidatePath("/projects")
+  })
+}
+
 /** Restart identification, optionally with a corrected identifier. */
 export async function restartResolution(projectId: string, identifier?: string) {
   return runAction(async () => {
