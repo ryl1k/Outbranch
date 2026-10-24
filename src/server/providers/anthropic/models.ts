@@ -2,16 +2,16 @@
  * Model routing. The deepest model handles synthesis and judgement; cheaper
  * models handle web research and simple extraction.
  */
+export type ModelId = "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5"
+
 export const MODELS = {
-  /** opportunity discovery, evaluation, deep dives, reports (Sonnet by project decision) */
-  reasoning: "claude-sonnet-5-5",
-  /** web research with server-side search/fetch */
-  research: "claude-sonnet-5-5",
+  /** opportunity discovery, evaluation, deep dives, reports (Haiku to keep cost down; set to claude-sonnet-5-5 for deeper analysis) */
+  reasoning: "claude-haiku-5-5",
+  /** web research with server-side search/fetch (Haiku to keep cost down; set to claude-sonnet-5-5 for deeper research) */
+  research: "claude-haiku-5-5",
   /** classification, normalization, short extraction */
   fast: "claude-haiku-5-5",
-} as const
-
-export type ModelId = (typeof MODELS)[keyof typeof MODELS]
+} as const satisfies Record<string, ModelId>
 
 /** First-party list prices, USD per million tokens (cached 2026-10). */
 const PRICES: Record<string, { input: number; output: number; cacheRead: number }> = {
