@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import Link from "next/link"
 import { ArrowRight, BadgeCheck, Play, CircleHelp, Compass, Lightbulb, Radar, Sprout } from "lucide-react"
 import { GithubIcon } from "@/components/brand/github-icon"
@@ -12,6 +13,7 @@ import { Reveal } from "@/components/marketing/motion"
 import { WorkflowBranches } from "@/components/marketing/workflow-branches"
 import { SignalPreview } from "@/components/marketing/signal-preview"
 import { Button } from "@/components/ui/button"
+import { auth, signOut } from "@/server/auth/config"
 
 export const metadata = {
   title: { absolute: "Outbranch — See further. Grow smarter." },
@@ -60,6 +62,32 @@ const FEATURES = [
   ["Reports for the team", "Share a printable brief or export Markdown with sources and limitations included."],
 ]
 
+const AUTH_LINK_CLASS = "hidden px-3 text-sm text-ivory/70 hover:text-ivory sm:block"
+
+const signInLink = (
+  <Link href="/signin" className={AUTH_LINK_CLASS}>
+    Sign in
+  </Link>
+)
+
+/** Sign in for visitors, sign out for people who already have a session. */
+async function AuthLink() {
+  const session = await auth()
+  if (!session?.user?.id) return signInLink
+  return (
+    <form
+      action={async () => {
+        "use server"
+        await signOut({ redirectTo: "/" })
+      }}
+    >
+      <button type="submit" className={AUTH_LINK_CLASS}>
+        Sign out
+      </button>
+    </form>
+  )
+}
+
 function Nav() {
   return (
     <header className="relative z-20">
@@ -73,7 +101,9 @@ function Nav() {
           <a href="#use-cases" className="hover:text-ivory">Use cases</a>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/signin" className="hidden px-3 text-sm text-ivory/70 hover:text-ivory sm:block">Sign in</Link>
+          <Suspense fallback={signInLink}>
+            <AuthLink />
+          </Suspense>
           <Button asChild className="rounded-full">
             <Link href="/projects/new">Explore opportunities</Link>
           </Button>
