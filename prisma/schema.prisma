@@ -23,6 +23,7 @@ model User {
   email      String?  @unique
   name       String?
   image      String?
+  passwordHash String?
   isGuest    Boolean  @default(false)
   createdAt  DateTime @default(now())
   lastSeenAt DateTime @default(now())

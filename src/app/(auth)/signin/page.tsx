@@ -5,6 +5,8 @@ import { Logo } from "@/components/brand/logo"
 import { BranchLines } from "@/components/brand/branch-lines"
 import { Button } from "@/components/ui/button"
 import { authProviders, signIn } from "@/server/auth/config"
+import { loginAction } from "@/server/auth/actions"
+import { CredentialsForm } from "@/components/auth/credentials-form"
 
 export const metadata = { title: "Sign in" }
 
@@ -45,6 +47,14 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
               Your projects and research history are saved to your workspace.
             </p>
           </div>
+
+          <CredentialsForm action={loginAction} next={redirectTo} mode="login" />
+          <p className="text-sm text-muted-foreground">
+            No account?{" "}
+            <Link href={`/signup?next=${encodeURIComponent(redirectTo)}`} className="font-medium text-foreground underline">
+              Create one
+            </Link>
+          </p>
 
           <div className="space-y-3">
             {authProviders.github && (

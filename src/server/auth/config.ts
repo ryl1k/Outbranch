@@ -3,6 +3,8 @@ import Credentials from "next-auth/providers/credentials"
 import GitHub from "next-auth/providers/github"
 import { db } from "@/server/db"
 import { env } from "@/server/env"
+import { verifyPassword } from "@/server/auth/password"
+import { z } from "zod"
 
 async function ensurePersonalWorkspace(userId: string, label: string) {
   const existing = await db.workspaceMember.findFirst({ where: { userId } })
@@ -34,6 +36,24 @@ if (env.AUTH_ENABLE_GUEST) {
     }),
   )
 }
+
+const passwordCredentials = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1) })
+
+providers.push(
+  Credentials({
+    id: "password",
+    name: "Email and password",
+    credentials: { email: {}, password: {} },
+    async authorize(raw) {
+      const parsed = passwordCredentials.safeParse(raw)
+      if (!parsed.success) return null
+      const user = await db.user.findUnique({ where: { email: parsed.data.email } })
+      if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) return null
+      await db.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } })
+      return { id: user.id, name: user.name, email: user.email }
+    },
+  }),
+)
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: env.AUTH_SECRET,
