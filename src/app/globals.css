@@ -326,3 +326,11 @@
   from { transform: translateX(-40px); }
   to { transform: translateX(40px); }
 }
+
+/* Workspace content column: 72rem on laptops, wider on Full-HD and large MacBook screens. */
+@utility workspace-width {
+  max-width: 72rem;
+  @media (width >= 96rem) {
+    max-width: 88rem;
+  }
+}

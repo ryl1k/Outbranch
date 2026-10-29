@@ -32,7 +32,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
   return (
     <div>
       <header className="border-b bg-card/50 print:hidden">
-        <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-8">
+        <div className="workspace-width mx-auto px-4 pt-6 sm:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-aubergine">
@@ -73,7 +73,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
       </header>
       {readOnly && (
         <div className="border-b bg-accent/60 print:hidden">
-          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div className="workspace-width mx-auto flex flex-col gap-2 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <span>
               <strong className="font-semibold">Showcase project.</strong> A completed Outbranch study you can explore. It is
               read-only.
@@ -84,7 +84,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
           </div>
         </div>
       )}
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 print:max-w-none print:p-0">{children}</div>
+      <div className="workspace-width mx-auto px-4 py-8 sm:px-8 print:max-w-none print:p-0">{children}</div>
     </div>
   )
 }

@@ -16,7 +16,7 @@ export default async function ProjectsPage() {
   const [projects, showcases] = await Promise.all([listProjects(viewer), listShowcases(viewer)])
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-8 sm:py-10">
+    <div className="workspace-width mx-auto space-y-8 px-4 py-8 sm:px-8 sm:py-10">
       <PageHeader
         eyebrow="Workspace"
         title="Research projects"

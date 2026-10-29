@@ -18,7 +18,7 @@ export default async function UsagePage() {
   ] as const
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8 sm:py-10">
+    <div className="workspace-width mx-auto space-y-10 px-4 py-8 sm:px-8 sm:py-10">
       <PageHeader eyebrow="Workspace" title="Usage & providers" description="Provider configuration and the cost of research across this workspace." />
       <section className="grid gap-3 sm:grid-cols-2">
         {providers.map(([name, ok, detail]) => (
