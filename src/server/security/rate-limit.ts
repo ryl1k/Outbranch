@@ -53,3 +53,19 @@ export async function assertGlobalBudget() {
     }
   }
 }
+
+const LOGIN_WINDOW_MS = 15 * 60 * 1000
+const LOGIN_MAX_FAILURES = 10
+
+/** False once an address has too many recent failed sign-ins; the attempt is then refused unchecked. */
+export async function assertLoginBudget(email: string) {
+  const since = new Date(Date.now() - LOGIN_WINDOW_MS)
+  const failures = await db.loginFailure.count({ where: { email, createdAt: { gte: since } } })
+  return failures < LOGIN_MAX_FAILURES
+}
+
+export async function recordLoginFailure(email: string) {
+  await db.loginFailure.create({ data: { email } })
+  // Old rows only matter inside the window; prune them as we go.
+  await db.loginFailure.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - LOGIN_WINDOW_MS) } } })
+}

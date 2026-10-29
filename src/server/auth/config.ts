@@ -3,17 +3,10 @@ import Credentials from "next-auth/providers/credentials"
 import GitHub from "next-auth/providers/github"
 import { db } from "@/server/db"
 import { env } from "@/server/env"
-import { verifyPassword } from "@/server/auth/password"
 import { z } from "zod"
-
-async function ensurePersonalWorkspace(userId: string, label: string) {
-  const existing = await db.workspaceMember.findFirst({ where: { userId } })
-  if (existing) return existing.workspaceId
-  const workspace = await db.workspace.create({
-    data: { name: `${label}'s workspace`, members: { create: { userId, role: "OWNER" } } },
-  })
-  return workspace.id
-}
+import { verifyPassword } from "@/server/auth/password"
+import { ensurePersonalWorkspace } from "@/server/auth/workspace"
+import { assertLoginBudget, recordLoginFailure } from "@/server/security/rate-limit"
 
 const providers: NextAuthConfig["providers"] = []
 
@@ -37,7 +30,8 @@ if (env.AUTH_ENABLE_GUEST) {
   )
 }
 
-const passwordCredentials = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1) })
+// The max bounds the scrypt work an anonymous request can trigger.
+const passwordCredentials = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1).max(200) })
 
 providers.push(
   Credentials({
@@ -47,8 +41,12 @@ providers.push(
     async authorize(raw) {
       const parsed = passwordCredentials.safeParse(raw)
       if (!parsed.success) return null
+      if (!(await assertLoginBudget(parsed.data.email))) return null
       const user = await db.user.findUnique({ where: { email: parsed.data.email } })
-      if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) return null
+      if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+        await recordLoginFailure(parsed.data.email)
+        return null
+      }
       await db.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } })
       return { id: user.id, name: user.name, email: user.email }
     },
@@ -66,10 +64,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "github" && user?.email) {
         const dbUser = await db.user.upsert({
           where: { email: user.email },
-          update: { name: user.name, image: user.image, lastSeenAt: new Date() },
+          // GitHub has verified this email; sign-up has not. Dropping a password set on an
+          // unverified sign-up stops anyone who registered the address first from keeping access.
+          update: { name: user.name, image: user.image, lastSeenAt: new Date(), passwordHash: null },
           create: { email: user.email, name: user.name, image: user.image },
         })
-        await ensurePersonalWorkspace(dbUser.id, dbUser.name ?? "My")
+        await ensurePersonalWorkspace(dbUser.id, dbUser.name)
         token.uid = dbUser.id
       } else if (user?.id) {
         token.uid = user.id

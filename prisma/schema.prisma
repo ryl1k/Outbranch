@@ -32,6 +32,15 @@ model User {
   projects    Project[]         @relation("ProjectCreator")
 }
 
+/// Failed password sign-ins, kept briefly to throttle guessing across serverless instances.
+model LoginFailure {
+  id        String   @id @default(cuid())
+  email     String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
 model Workspace {
   id        String   @id @default(cuid())
   name      String

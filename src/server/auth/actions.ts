@@ -5,12 +5,12 @@ import { z } from "zod"
 import { db } from "@/server/db"
 import { hashPassword } from "@/server/auth/password"
 import { signIn } from "@/server/auth/config"
+import { safeNext } from "@/server/auth/next"
+import { ensurePersonalWorkspace } from "@/server/auth/workspace"
+import { Prisma } from "@/generated/prisma/client"
 
 export type AuthFormState = { error?: string } | undefined
 
-function safeNext(next: FormDataEntryValue | null) {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/projects"
-}
 
 const credentials = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address."),
@@ -37,20 +37,24 @@ export async function signUpAction(_: AuthFormState, form: FormData): Promise<Au
   if (!parsed.success) return { error: parsed.error.issues[0].message }
   const name = String(form.get("name") ?? "").trim().slice(0, 80) || null
 
-  if (await db.user.findUnique({ where: { email: parsed.data.email } })) {
-    return { error: "An account with this email already exists." }
+  const exists = { error: "An account with this email already exists." }
+  if (await db.user.findUnique({ where: { email: parsed.data.email } })) return exists
+  let userId: string
+  try {
+    const user = await db.user.create({
+      data: { email: parsed.data.email, name, passwordHash: await hashPassword(parsed.data.password) },
+    })
+    userId = user.id
+  } catch (err) {
+    // Two sign-ups for one address at the same moment: the unique index decides.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") return exists
+    throw err
   }
-  const user = await db.user.create({
-    data: { email: parsed.data.email, name, passwordHash: await hashPassword(parsed.data.password) },
-  })
-  await db.workspace.create({
-    data: { name: `${name ?? "My"}'s workspace`, members: { create: { userId: user.id, role: "OWNER" } } },
-  })
-  return loginAction(undefined, (() => {
-    const f = new FormData()
-    f.set("email", parsed.data.email)
-    f.set("password", parsed.data.password)
-    f.set("next", redirectTo)
-    return f
-  })())
+  await ensurePersonalWorkspace(userId, name)
+
+  const login = new FormData()
+  login.set("email", parsed.data.email)
+  login.set("password", parsed.data.password)
+  login.set("next", redirectTo)
+  return loginAction(undefined, login)
 }
