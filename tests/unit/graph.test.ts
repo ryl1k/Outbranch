@@ -67,4 +67,17 @@ describe("layoutRadial", () => {
     const keys = new Set([...pos.values()].map((p) => `${Math.round(p.x)}:${Math.round(p.y)}`))
     expect(keys.size).toBe(visible.length)
   })
+
+  it("keeps small graphs compact and ring order intact", () => {
+    const graph = buildCulturalGraph(input)
+    const visible = graph.nodes.filter((n) => !n.collapsed)
+    const pos = layoutRadial(visible, graph.edges)
+    const radius = (kind: string) =>
+      Math.max(...visible.filter((n) => n.kind === kind).map((n) => Math.hypot(pos.get(n.id)!.x, pos.get(n.id)!.y)), 0)
+    // A handful of nodes should not be spread over the full 980-unit layout.
+    expect(Math.max(...[...pos.values()].map((p) => Math.hypot(p.x, p.y)))).toBeLessThan(980)
+    const cultural = radius("cultural")
+    const opportunity = radius("opportunity")
+    if (cultural && opportunity) expect(opportunity).toBeGreaterThan(cultural)
+  })
 })
