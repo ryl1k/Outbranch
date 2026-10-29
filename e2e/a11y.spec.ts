@@ -27,6 +27,8 @@ test("research workspace meets WCAG 2.1 AA", async ({ page }) => {
   await page.getByRole("link", { name: new RegExp(SEED) }).first().click()
   await audit(page, "overview")
   await page.getByRole("link", { name: "Opportunities", exact: true }).click()
+  // The overview lists the same opportunity twice, so wait until the portfolio has replaced it.
+  await expect(page).toHaveURL(/\/opportunities$/)
   await audit(page, "opportunities")
   await page.getByRole("link", { name: "Simulated race-day fuel kits with trail organisers" }).click()
   await audit(page, "deep dive")
