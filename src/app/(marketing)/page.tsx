@@ -137,10 +137,12 @@ function Nav() {
 export default function LandingPage() {
   return (
     <div className="bg-porcelain">
-      <section className="theme-dark relative flex min-h-[max(640px,min(100svh,900px))] flex-col overflow-hidden bg-background text-foreground">
-        {/* Phones and tablets: the mountain sits under the copy. Desktop: it fills the hero behind it,
-            nudged right at smaller desktop widths so the trail clears the buttons. */}
-        <MountainScene className="order-last mt-2 ml-[-40%] h-[420px] w-[150%] shrink-0 [mask-image:linear-gradient(to_bottom,transparent,black_35%)] sm:ml-[-25%] sm:h-[520px] sm:w-[125%] lg:absolute lg:inset-y-0 lg:left-[12%] lg:order-none lg:m-0 lg:h-full lg:w-full lg:[mask-image:none] xl:left-0" />
+      <section className="theme-dark relative flex min-h-[max(640px,min(100svh,1080px))] flex-col overflow-hidden bg-background text-foreground">
+        {/* Phones and tablets: the mountain sits under the copy. Desktop: a 16:9 scene the hero's
+            height, pinned right. Narrow desktops crop its left side (nudged right so the trail
+            clears the buttons); wide monitors fade its left edge into the background rather than
+            zooming in and pushing the summit into the nav. */}
+        <MountainScene className="order-last mt-2 ml-[-40%] h-[420px] w-[150%] shrink-0 [mask-image:linear-gradient(to_bottom,transparent,black_35%)] sm:ml-[-25%] sm:h-[520px] sm:w-[125%] lg:absolute lg:inset-y-0 lg:right-[-12%] lg:order-none lg:m-0 lg:aspect-video lg:h-full lg:w-auto lg:max-w-none lg:[mask-image:linear-gradient(to_right,transparent,black_20%)] xl:right-0" />
         <div
           className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(26_14_20/0.92)_0%,rgb(26_14_20/0.7)_32%,rgb(26_14_20/0.1)_55%,transparent_68%)] lg:block"
           aria-hidden
