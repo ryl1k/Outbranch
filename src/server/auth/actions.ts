@@ -9,8 +9,8 @@ import { safeNext } from "@/server/auth/next"
 import { ensurePersonalWorkspace } from "@/server/auth/workspace"
 import { Prisma } from "@/generated/prisma/client"
 
-export type AuthFormState = { error?: string } | undefined
-
+/** An error, plus what was typed: React resets the form after an action, so the fields are refilled from this. */
+export type AuthFormState = { error?: string; email?: string; name?: string } | undefined
 
 const credentials = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address."),
@@ -19,14 +19,15 @@ const credentials = z.object({
 
 export async function loginAction(_: AuthFormState, form: FormData): Promise<AuthFormState> {
   const redirectTo = safeNext(form.get("next"))
+  const email = String(form.get("email") ?? "")
   try {
     await signIn("password", {
-      email: String(form.get("email") ?? ""),
+      email,
       password: String(form.get("password") ?? ""),
       redirectTo,
     })
   } catch (err) {
-    if (err instanceof AuthError) return { error: "Incorrect email or password." }
+    if (err instanceof AuthError) return { error: "Incorrect email or password.", email }
     throw err // the redirect on success is thrown and must propagate
   }
 }
@@ -34,10 +35,11 @@ export async function loginAction(_: AuthFormState, form: FormData): Promise<Aut
 export async function signUpAction(_: AuthFormState, form: FormData): Promise<AuthFormState> {
   const redirectTo = safeNext(form.get("next"))
   const parsed = credentials.safeParse({ email: form.get("email"), password: form.get("password") })
-  if (!parsed.success) return { error: parsed.error.issues[0].message }
   const name = String(form.get("name") ?? "").trim().slice(0, 80) || null
+  const typed = { email: String(form.get("email") ?? ""), name: name ?? undefined }
+  if (!parsed.success) return { error: parsed.error.issues[0].message, ...typed }
 
-  const exists = { error: "An account with this email already exists." }
+  const exists = { error: "An account with this email already exists.", ...typed }
   if (await db.user.findUnique({ where: { email: parsed.data.email } })) return exists
   let userId: string
   try {

@@ -22,12 +22,12 @@ export function CredentialsForm({ action, next, mode }: Props) {
       {signup && (
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" autoComplete="name" />
+          <Input id="name" name="name" autoComplete="name" defaultValue={state?.name} key={state?.name} />
         </div>
       )}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.email} key={state?.email} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
