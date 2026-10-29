@@ -10,8 +10,18 @@ export type TasteOverlap =
  * documented /v2/analysis/compare endpoint. Scores are only meaningful within
  * this comparison.
  */
-export async function tasteOverlap(projectId: string, a: string[], b: string[]): Promise<TasteOverlap> {
-  if (!a.length || !b.length) return { status: "unavailable", reason: "One of the opportunities has no Qloo entities to compare." }
+/** Qloo entity ids are UUIDs; simulated fixture entities are not, and Qloo rejects them. */
+const QLOO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export async function tasteOverlap(projectId: string, entitiesA: string[], entitiesB: string[]): Promise<TasteOverlap> {
+  if (!entitiesA.length || !entitiesB.length) {
+    return { status: "unavailable", reason: "One of the opportunities has no Qloo entities to compare." }
+  }
+  const a = entitiesA.filter((id) => QLOO_ID.test(id))
+  const b = entitiesB.filter((id) => QLOO_ID.test(id))
+  if (!a.length || !b.length) {
+    return { status: "unavailable", reason: "Taste overlap needs live Qloo entities. This comparison uses simulated data." }
+  }
   try {
     const res = await qloo.compare({ projectId, operation: "compare.taste-overlap" }, a.slice(0, 5), b.slice(0, 5))
     const tags = res.data.results.tags
@@ -19,6 +29,7 @@ export async function tasteOverlap(projectId: string, a: string[], b: string[]):
       .slice(0, 10)
     return tags.length ? { status: "ok", tags } : { status: "unavailable", reason: "Qloo reported no shared taste tags." }
   } catch (error) {
-    return { status: "unavailable", reason: `Qloo comparison failed: ${(error as Error).message}` }
+    console.error("[taste-overlap]", error)
+    return { status: "unavailable", reason: "Qloo could not compare these opportunities right now. Try again later." }
   }
 }
