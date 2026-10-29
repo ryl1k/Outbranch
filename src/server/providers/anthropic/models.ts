@@ -21,9 +21,18 @@ const PRICES: Record<string, { input: number; output: number; cacheRead: number 
   "claude-haiku-5-5": { input: 0.1, output: 0.5, cacheRead: 0.1 },
 }
 
-/** Server-side fallback on refusal is available for Opus and Sonnet, not Haiku. */
+function isHaiku(model: ModelId) {
+  return model.startsWith("claude-haiku")
+}
+
+/** Server-side fallback on refusal is available for Opus and Sonnet; Haiku rejects a `fallbacks` list. */
 export function supportsFallback(model: ModelId) {
-  return model !== MODELS.fast
+  return !isHaiku(model)
+}
+
+/** Web search/fetch with dynamic filtering is documented for Opus and Sonnet; Haiku uses the basic versions. */
+export function supportsDynamicWebTools(model: ModelId) {
+  return !isHaiku(model)
 }
 
 /** Token cost only. Web search requests are counted separately, not priced here. */

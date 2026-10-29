@@ -5,7 +5,7 @@ import type { z } from "zod"
 import { env } from "@/server/env"
 import { recordUsage, type UsageContext } from "@/server/usage/record"
 import { ProviderResponseError, ProviderUnavailableError } from "../errors"
-import { estimateTokenCostUsd, supportsFallback, type ModelId } from "./models"
+import { estimateTokenCostUsd, supportsDynamicWebTools, supportsFallback, type ModelId } from "./models"
 
 type Effort = "low" | "medium" | "high" | "xhigh" | "max"
 
@@ -160,10 +160,11 @@ export async function webResearch(opts: {
   const blocked = opts.blockedDomains?.length ? { blocked_domains: opts.blockedDomains } : {}
   const notes: string[] = []
   const maxFetches = opts.maxFetches ?? 4
+  const dynamic = supportsDynamicWebTools(opts.model)
   const tools: Anthropic.Beta.BetaToolUnion[] = [
-    { type: "web_search_20260209", name: "web_search", max_uses: opts.maxSearches ?? 6, ...blocked },
+    { type: dynamic ? "web_search_20260209" : "web_search_20250305", name: "web_search", max_uses: opts.maxSearches ?? 6, ...blocked },
     ...(maxFetches > 0
-      ? [{ type: "web_fetch_20260209" as const, name: "web_fetch" as const, max_uses: maxFetches, ...blocked }]
+      ? [{ type: dynamic ? ("web_fetch_20260209" as const) : ("web_fetch_20250910" as const), name: "web_fetch" as const, max_uses: maxFetches, ...blocked }]
       : []),
   ]
 
