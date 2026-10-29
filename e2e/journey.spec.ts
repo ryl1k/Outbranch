@@ -40,6 +40,38 @@ test("a guest creates a project and can cancel the running research", async ({ p
   }
 })
 
+test("a guest deletes a project from the projects list", async ({ page }) => {
+  await signInAsGuest(page, "/projects/new")
+  await page.getByLabel("What should Outbranch research?").fill("Outbranch e2e delete me")
+  await page.getByRole("button", { name: "Explore Opportunities" }).click()
+  await expect(page).toHaveURL(/\/projects\/[a-z0-9]+$/)
+  await page.goto("/projects")
+  await page.getByRole("button", { name: /^Delete Outbranch e2e delete me/ }).click()
+  await page.getByRole("button", { name: "Delete project" }).click()
+  await expect(page.getByRole("button", { name: /^Delete Outbranch e2e delete me/ })).toHaveCount(0)
+})
+
+test("someone signs up with email, signs out and signs back in", async ({ page }) => {
+  const email = `e2e-${Date.now()}@example.com`
+  await page.goto("/signup?next=/projects")
+  await page.getByLabel("Name").fill("E2E Tester")
+  await page.getByLabel("Email").fill(email)
+  await page.getByLabel("Password").fill("a long test password")
+  await page.getByRole("button", { name: "Create account" }).click()
+  await expect(page).toHaveURL((url) => url.pathname === "/projects")
+
+  await page.goto("/")
+  await page.getByRole("button", { name: "Sign out" }).click()
+  await page.goto("/signin?next=/projects")
+  await page.getByLabel("Email").fill(email)
+  await page.getByLabel("Password").fill("wrong password!")
+  await page.getByRole("button", { name: "Sign in", exact: true }).click()
+  await expect(page.getByRole("alert")).toHaveText("Incorrect email or password.")
+  await page.getByLabel("Password").fill("a long test password")
+  await page.getByRole("button", { name: "Sign in", exact: true }).click()
+  await expect(page).toHaveURL((url) => url.pathname === "/projects")
+})
+
 test("explore a finished study: overview, opportunities, network, comparison, deep dive and report", async ({ page }) => {
   await openSeededStudy(page)
 
