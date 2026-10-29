@@ -6,13 +6,15 @@ The reference deployment is **Vercel** (Next.js), **Neon** (Postgres) and **Inng
 
 ## 1. Database
 
-1. Create a Postgres database. With Neon, copy both the **pooled** connection string (for the app)
-   and the **direct** one (for migrations; pooled connections can break `prisma migrate`).
-2. Run migrations from your machine using the direct connection string:
+The Neon project is linked through `neon.ts` (Postgres only). `npx neon@latest env pull --file .env.neon`
+writes `DATABASE_URL` (pooled `-pooler` host, for the app) and `DATABASE_URL_UNPOOLED` (direct, for
+migrations). `prisma.config.ts` prefers `DATABASE_URL_UNPOOLED`, because Prisma Migrate breaks behind PgBouncer.
 
-   ```bash
-   DATABASE_URL="<connection string>" npx prisma migrate deploy
-   ```
+```bash
+set -a && . ./.env.neon && set +a && npx prisma migrate deploy
+```
+
+The deploy workflow runs this on every release, so you only need it by hand for the first setup.
 
 ## 2. Inngest
 
@@ -44,7 +46,27 @@ Inngest route sets `maxDuration = 300`, and each step is a separate short invoca
 After the first deploy, sync the app in the Inngest dashboard using `https://<your-domain>/api/inngest`
 (or `curl -X PUT https://<your-domain>/api/inngest`).
 
-## 4. Showcase
+## 4. CI/CD (GitHub Actions)
+
+- `.github/workflows/ci.yml` runs lint, typecheck, unit and integration tests (against a Postgres service) and a
+  production build on pushes to `main`/`dev` and on every pull request.
+- `.github/workflows/deploy.yml` releases on every push to `main` (or by hand with *Run workflow*): it reruns CI,
+  applies migrations to Neon, builds with the Vercel CLI, deploys to production, syncs Inngest and checks
+  `/api/health`.
+- `vercel.json` turns off Vercel's own Git deployments, so the workflow is the only deployer.
+
+Set these in GitHub under *Settings → Secrets and variables → Actions*:
+
+| Kind | Name | Value |
+|---|---|---|
+| secret | `VERCEL_TOKEN` | Vercel → Account settings → Tokens |
+| secret | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | `.vercel/project.json` after `npx vercel link` |
+| secret | `DATABASE_URL_UNPOOLED` | Neon direct connection string |
+| variable | `PRODUCTION_URL` | for example `https://outbranch.vercel.app` |
+
+The app's runtime variables (section 3) live in Vercel; `vercel pull` brings them into the build.
+
+## 5. Showcase
 
 Run one complete study in production, then publish it read-only for visitors:
 
@@ -54,7 +76,7 @@ DATABASE_URL="<connection string>" npx tsx --conditions=react-server scripts/sho
 
 `/showcase` (linked from the landing page) opens the most recent showcase after guest sign-in.
 
-## 5. Verify
+## 6. Verify
 
 - `GET /api/health` should return `{"status":"ok","database":"ok", ...}` with both providers `true`.
 - Sign in as a guest, run a study end to end, and watch the job in the Inngest dashboard.
