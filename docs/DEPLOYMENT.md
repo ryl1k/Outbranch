@@ -14,7 +14,7 @@ migrations). `prisma.config.ts` prefers `DATABASE_URL_UNPOOLED`, because Prisma 
 set -a && . ./.env.neon && set +a && npx prisma migrate deploy
 ```
 
-The deploy workflow runs this on every release, so you only need it by hand for the first setup.
+Vercel production builds run this automatically (see section 4).
 
 ## 2. Inngest
 
@@ -29,6 +29,7 @@ Import the repository and set these environment variables:
 | Variable | Value |
 |---|---|
 | `DATABASE_URL` | pooled Postgres connection string |
+| `DATABASE_URL_UNPOOLED` | direct connection string, used only by the build to migrate (Production only) |
 | `AUTH_SECRET` | `npx auth secret` |
 | `AUTH_ENABLE_GUEST` | `true` (lets judges and visitors in without an account) |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | optional GitHub OAuth app |
@@ -40,31 +41,20 @@ Import the repository and set these environment variables:
 | `GLOBAL_JOBS_PER_HOUR` | deployment-wide research jobs per hour (default 60) |
 | `DAILY_SPEND_LIMIT_USD` | optional cap on 24h model-token spend; a full study costs about $0.80 in tokens plus web searches |
 
-The build command is `npm run build` (it runs `prisma generate`). Function duration: the
+The build command is `npm run build` (it runs `prisma generate`, then migrations on production builds). Function duration: the
 Inngest route sets `maxDuration = 300`, and each step is a separate short invocation.
 
 After the first deploy, sync the app in the Inngest dashboard using `https://<your-domain>/api/inngest`
-(or `curl -X PUT https://<your-domain>/api/inngest`).
+(or `curl -X PUT https://<your-domain>/api/inngest`). The Inngest Vercel integration does this, and sets
+the two Inngest keys, automatically on every deploy.
 
-## 4. CI/CD (GitHub Actions)
+## 4. CI/CD
 
-- `.github/workflows/ci.yml` runs lint, typecheck, unit and integration tests (against a Postgres service) and a
-  production build on pushes to `main`/`dev` and on every pull request.
-- `.github/workflows/deploy.yml` releases on every push to `main` (or by hand with *Run workflow*): it reruns CI,
-  applies migrations to Neon, builds with the Vercel CLI, deploys to production, syncs Inngest and checks
-  `/api/health`.
-- `vercel.json` turns off Vercel's own Git deployments, so the workflow is the only deployer.
-
-Set these in GitHub under *Settings → Secrets and variables → Actions*:
-
-| Kind | Name | Value |
-|---|---|---|
-| secret | `VERCEL_TOKEN` | Vercel → Account settings → Tokens |
-| secret | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | `.vercel/project.json` after `npx vercel link` |
-| secret | `DATABASE_URL_UNPOOLED` | Neon direct connection string |
-| variable | `PRODUCTION_URL` | for example `https://outbranch.vercel.app` |
-
-The app's runtime variables (section 3) live in Vercel; `vercel pull` brings them into the build.
+- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, unit and integration tests (against a Postgres
+  service) and a production build on pushes to `main`/`dev` and on every pull request. It needs no secrets.
+- **CD:** Vercel's Git integration deploys every push to `main` to production (other branches get previews).
+  `scripts/vercel-migrate.mjs` applies Prisma migrations during production builds only, over
+  `DATABASE_URL_UNPOOLED`; a missing variable fails the build rather than shipping code against an old schema.
 
 ## 5. Showcase
 
