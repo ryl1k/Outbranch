@@ -11,6 +11,7 @@ import { MountainScene } from "@/components/marketing/mountain-scene"
 import { InViewBranches } from "@/components/marketing/in-view-branches"
 import { Reveal } from "@/components/marketing/motion"
 import { WorkflowBranches } from "@/components/marketing/workflow-branches"
+import { MarketingMenu } from "@/components/marketing/marketing-menu"
 import { SignalPreview } from "@/components/marketing/signal-preview"
 import { Button } from "@/components/ui/button"
 import { auth, signOut } from "@/server/auth/config"
@@ -62,18 +63,27 @@ const FEATURES = [
   ["Reports for the team", "Share a printable brief or export Markdown with sources and limitations included."],
 ]
 
-const AUTH_LINK_CLASS = "hidden px-3 text-sm text-ivory/70 hover:text-ivory sm:block"
+const SECTIONS = [
+  ["#how-it-works", "How it works"],
+  ["#evaluation", "Evaluation"],
+  ["#use-cases", "Use cases"],
+] as const
 
-const signInLink = (
-  <Link href="/signin" className={AUTH_LINK_CLASS}>
-    Sign in
-  </Link>
-)
+const NAV_AUTH_CLASS = "px-3 text-sm text-ivory/70 hover:text-ivory"
+const MENU_AUTH_CLASS = "block w-full rounded-lg px-3 py-3 text-left text-base text-ivory/80 hover:bg-ivory/5 hover:text-ivory"
+
+function SignInLink({ className }: { className: string }) {
+  return (
+    <Link href="/signin" className={className}>
+      Sign in
+    </Link>
+  )
+}
 
 /** Sign in for visitors, sign out for people who already have a session. */
-async function AuthLink() {
+async function AuthLink({ className }: { className: string }) {
   const session = await auth()
-  if (!session?.user?.id) return signInLink
+  if (!session?.user?.id) return <SignInLink className={className} />
   return (
     <form
       action={async () => {
@@ -81,10 +91,18 @@ async function AuthLink() {
         await signOut({ redirectTo: "/" })
       }}
     >
-      <button type="submit" className={AUTH_LINK_CLASS}>
+      <button type="submit" className={className}>
         Sign out
       </button>
     </form>
+  )
+}
+
+function Account({ className }: { className: string }) {
+  return (
+    <Suspense fallback={<SignInLink className={className} />}>
+      <AuthLink className={className} />
+    </Suspense>
   )
 }
 
@@ -96,17 +114,20 @@ function Nav() {
           <Logo tone="light" className="text-xl" />
         </Link>
         <div className="hidden items-center gap-8 text-sm text-ivory/70 md:flex">
-          <a href="#how-it-works" className="hover:text-ivory">How it works</a>
-          <a href="#evaluation" className="hover:text-ivory">Evaluation</a>
-          <a href="#use-cases" className="hover:text-ivory">Use cases</a>
+          {SECTIONS.map(([href, label]) => (
+            <a key={href} href={href} className="hover:text-ivory">
+              {label}
+            </a>
+          ))}
         </div>
         <div className="flex items-center gap-2">
-          <Suspense fallback={signInLink}>
-            <AuthLink />
-          </Suspense>
-          <Button asChild className="rounded-full">
+          <div className="hidden md:block">
+            <Account className={NAV_AUTH_CLASS} />
+          </div>
+          <Button asChild className="hidden rounded-full sm:inline-flex">
             <Link href="/projects/new">Explore opportunities</Link>
           </Button>
+          <MarketingMenu links={SECTIONS} account={<Account className={MENU_AUTH_CLASS} />} />
         </div>
       </nav>
     </header>
@@ -117,16 +138,17 @@ export default function LandingPage() {
   return (
     <div className="bg-porcelain">
       <section className="theme-dark relative flex min-h-[max(640px,min(100svh,900px))] flex-col overflow-hidden bg-background text-foreground">
-        {/* Phones: the mountain sits under the copy. Wider: it fills the hero behind it. */}
-        <MountainScene className="order-last mt-2 ml-[-40%] h-[420px] w-[150%] shrink-0 [mask-image:linear-gradient(to_bottom,transparent,black_35%)] md:absolute md:inset-0 md:order-none md:m-0 md:h-full md:w-full md:[mask-image:none]" />
+        {/* Phones and tablets: the mountain sits under the copy. Desktop: it fills the hero behind it,
+            nudged right at smaller desktop widths so the trail clears the buttons. */}
+        <MountainScene className="order-last mt-2 ml-[-40%] h-[420px] w-[150%] shrink-0 [mask-image:linear-gradient(to_bottom,transparent,black_35%)] sm:ml-[-25%] sm:h-[520px] sm:w-[125%] lg:absolute lg:inset-y-0 lg:left-[12%] lg:order-none lg:m-0 lg:h-full lg:w-full lg:[mask-image:none] xl:left-0" />
         <div
-          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(26_14_20/0.92)_0%,rgb(26_14_20/0.7)_32%,rgb(26_14_20/0.1)_55%,transparent_68%)] md:block"
+          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(26_14_20/0.92)_0%,rgb(26_14_20/0.7)_32%,rgb(26_14_20/0.1)_55%,transparent_68%)] lg:block"
           aria-hidden
         />
         <div className="relative z-10">
           <Nav />
         </div>
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-4 pt-8 sm:px-8 md:pb-24">
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-4 pt-8 sm:px-8 lg:pb-24">
           <div className="max-w-xl">
             <p className="animate-rise text-xs font-medium tracking-[0.18em] text-rose uppercase">Cultural intelligence for real growth</p>
             <h1 className="mt-5 animate-rise font-editorial text-[clamp(2.75rem,5.4vw,5rem)] leading-[1.02] text-balance text-ivory [animation-delay:100ms]">
