@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { ArrowRight, ChevronDown, Loader2, Search } from "lucide-react"
-import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { toastActionError } from "@/components/billing/paywall-toast"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
@@ -25,6 +26,7 @@ const CONTEXT_FIELDS: { key: Exclude<keyof UserContext, "budgetRange">; label: s
 ]
 
 export function BrandInputForm() {
+  const router = useRouter()
   const [identifier, setIdentifier] = useState("")
   const [context, setContext] = useState<UserContext>({})
   const [error, setError] = useState<string | null>(null)
@@ -37,7 +39,7 @@ export function BrandInputForm() {
       const result = await createProject({ identifier, context })
       if (result && !result.ok) {
         setError(result.error)
-        toast.error(result.error)
+        toastActionError(result, router)
       }
     })
   }

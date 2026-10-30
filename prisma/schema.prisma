@@ -30,6 +30,20 @@ model User {
 
   memberships WorkspaceMember[]
   projects    Project[]         @relation("ProjectCreator")
+  guestDevice GuestDevice?
+}
+
+/// Ties a browser to its guest user and caps new guests per IP. Values are keyed hashes.
+model GuestDevice {
+  id         String   @id @default(cuid())
+  deviceHash String   @unique
+  ipHash     String
+  userId     String   @unique
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ipHash, createdAt])
 }
 
 /// Failed password sign-ins, kept briefly to throttle guessing across serverless instances.
@@ -45,6 +59,13 @@ model Workspace {
   id        String   @id @default(cuid())
   name      String
   createdAt DateTime @default(now())
+
+  /// Stripe billing state, kept in sync by checkout return and webhooks.
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
 
   members  WorkspaceMember[]
   projects Project[]

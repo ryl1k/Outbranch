@@ -1,6 +1,7 @@
 "use server"
 
 import { AuthError } from "next-auth"
+import { redirect } from "next/navigation"
 import { z } from "zod"
 import { db } from "@/server/db"
 import { hashPassword } from "@/server/auth/password"
@@ -28,6 +29,16 @@ export async function loginAction(_: AuthFormState, form: FormData): Promise<Aut
     })
   } catch (err) {
     if (err instanceof AuthError) return { error: "Incorrect email or password.", email }
+    throw err // the redirect on success is thrown and must propagate
+  }
+}
+
+export async function guestSignInAction(form: FormData) {
+  const redirectTo = safeNext(form.get("next"))
+  try {
+    await signIn("guest", { redirectTo })
+  } catch (err) {
+    if (err instanceof AuthError) redirect(`/signin?error=guest_limit&next=${encodeURIComponent(redirectTo)}`)
     throw err // the redirect on success is thrown and must propagate
   }
 }

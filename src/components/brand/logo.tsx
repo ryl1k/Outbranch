@@ -78,11 +78,19 @@ export function Logo({
       className={cn(
         "inline-flex items-center gap-[0.25em] font-heading font-bold tracking-[-0.035em]",
         tone === "light" && "text-[#F8F3EE]",
-        tone === "brand" && "text-aubergine",
+        tone === "brand" && "text-aubergine dark:text-[#F8F3EE]",
         className,
       )}
     >
-      <LogoMark tone={tone} className={cn("size-[1.45em]", markClassName)} />
+      {tone === "brand" ? (
+        <>
+          {/* The brand mark is dark burgundy; swap to the light mark where the dark theme applies. */}
+          <LogoMark tone="brand" className={cn("size-[1.45em] dark:hidden", markClassName)} />
+          <LogoMark tone="light" className={cn("hidden size-[1.45em] dark:block", markClassName)} />
+        </>
+      ) : (
+        <LogoMark tone={tone} className={cn("size-[1.45em]", markClassName)} />
+      )}
       <span className="leading-none">outbranch</span>
     </span>
   )

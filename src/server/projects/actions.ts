@@ -7,6 +7,7 @@ import { culturalRefListSchema } from "@/lib/schemas/brand"
 import { analysisConfigSchema, type AnalysisConfigInput } from "@/lib/schemas/discovery"
 import { createProjectSchema, projectNameFrom, type CreateProjectInput } from "@/lib/schemas/project"
 import { assertProjectAccess, assertViewer } from "@/server/auth/session"
+import { assertCanCreateProject, assertCanStartDeepDive } from "@/server/billing/entitlements"
 import { db } from "@/server/db"
 import { enqueueJob, requestCancel } from "@/server/jobs/lifecycle"
 import { qlooMode } from "@/server/providers/qloo/client"
@@ -22,6 +23,7 @@ export async function createProject(input: CreateProjectInput) {
   const result = await runAction(async () => {
     const viewer = await assertViewer()
     const { identifier, context } = createProjectSchema.parse(input)
+    await assertCanCreateProject(viewer.workspace.id, { isGuest: viewer.user.isGuest })
     await assertProjectBudget(viewer.workspace.id)
     await assertJobBudget(viewer.workspace.id)
     const project = await db.project.create({
@@ -96,6 +98,7 @@ export async function retryLastJob(projectId: string) {
       orderBy: { createdAt: "desc" },
     })
     const kind = last?.kind ?? "RESOLVE_ENTITY"
+    if (kind === "DEEP_DIVE") await assertCanStartDeepDive(viewer.workspace.id)
     if (kind === "DISCOVERY") {
       const profile = await db.brandProfile.findUnique({ where: { projectId } })
       if (profile?.status !== "CONFIRMED") throw new z.ZodError([{ code: "custom", message: "Confirm the brand profile first", path: [] }])
@@ -319,6 +322,7 @@ export async function requestDeepDive(projectId: string, opportunityId: string) 
   return runAction(async () => {
     const opp = await assertOpportunity(projectId, opportunityId)
     const { viewer } = await assertProjectAccess(projectId)
+    await assertCanStartDeepDive(viewer.workspace.id)
     await assertJobBudget(viewer.workspace.id)
     await enqueueJob({ projectId, workspaceId: viewer.workspace.id, kind: "DEEP_DIVE", opportunityId: opp.id })
     revalidatePath(`/projects/${projectId}/opportunities/${opportunityId}`)
