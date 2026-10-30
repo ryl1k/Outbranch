@@ -3,17 +3,17 @@
 import { useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Bookmark, BookmarkCheck, Briefcase, Eye, EyeOff, Network, ShieldAlert } from "lucide-react"
+import { ArrowRight, Bookmark, BookmarkCheck, Eye, EyeOff, Network } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { evaluationCriteriaSchema, type OpportunityCategory } from "@/lib/schemas/discovery"
+import type { OpportunityCategory } from "@/lib/schemas/discovery"
 import { cn } from "@/lib/utils"
 import { setOpportunityExcluded, toggleShortlist } from "@/server/projects/actions"
 import type { PortfolioOpportunity } from "@/server/projects/queries"
-import { CategoryBadge, EvidenceStrengthBadge, LevelMeter } from "./badges"
+import { CategoryBadge, EvidenceStrengthBadge } from "./badges"
 
 export function OpportunityCard({
   projectId,
@@ -30,9 +30,8 @@ export function OpportunityCard({
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
-  const criteria = evaluationCriteriaSchema.safeParse(opp.evaluations[0]?.criteria)
   const excluded = opp.status === "EXCLUDED"
-  const entities = [...new Map(opp.qlooEntities.map((e) => [e.id, e])).values()].slice(0, 5)
+  const entities = [...new Map(opp.qlooEntities.map((e) => [e.id, e])).values()].slice(0, 3)
 
   const act = (fn: () => Promise<{ ok: boolean; error?: string }>, message: string) =>
     start(async () => {
@@ -67,7 +66,7 @@ export function OpportunityCard({
             {excluded && <Badge variant="muted">Excluded</Badge>}
           </div>
           <h3 className="text-base leading-snug font-semibold">
-            <Link href={`/projects/${projectId}/opportunities/${opp.id}`} className="after:absolute after:inset-0 hover:text-primary">
+            <Link href={`/projects/${projectId}/opportunities/${opp.id}`} className="after:absolute after:inset-0 hover:text-primary dark:hover:text-rose">
               {opp.title}
             </Link>
           </h3>
@@ -83,17 +82,12 @@ export function OpportunityCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-5">
-        <p className="text-sm text-foreground/80">{opp.summary}</p>
-
-        <div className="rounded-lg bg-muted/50 p-3">
-          <p className="eyebrow mb-1">Commercial mechanism</p>
-          <p className="line-clamp-3 text-sm">{opp.mechanism}</p>
-        </div>
+        <p className="line-clamp-3 text-sm text-foreground/80">{opp.summary}</p>
 
         {entities.length > 0 && (
-          <div className="space-y-1.5">
+          <div className="mt-auto space-y-1.5">
             <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Network className="size-3.5" /> Supported by Qloo affinity with
+              <Network className="size-3.5" /> Qloo affinity with
             </p>
             <ul className="flex flex-wrap gap-1.5">
               {entities.map((e) => (
@@ -106,41 +100,6 @@ export function OpportunityCard({
             </ul>
           </div>
         )}
-
-        <dl className="mt-auto grid grid-cols-2 gap-3 border-t pt-4 text-xs">
-          <div className="space-y-1">
-            <dt className="flex items-center gap-1 text-muted-foreground">
-              <Briefcase className="size-3.5" /> Commercial evidence
-            </dt>
-            <dd>
-              {opp.commercialAt ? (
-                <span>
-                  {opp._count.claims} sourced findings
-                  {opp.contradicting > 0 && <span className="text-warning"> · {opp.contradicting} contradicting</span>}
-                </span>
-              ) : (
-                <span className="text-muted-foreground">Not yet investigated</span>
-              )}
-            </dd>
-          </div>
-          <div className="space-y-1">
-            <dt className="flex items-center gap-1 text-muted-foreground">
-              <ShieldAlert className="size-3.5" /> Risk
-            </dt>
-            <dd>
-              {criteria.success ? (
-                <LevelMeter level={criteria.data.risk.level} inverse unavailable={criteria.data.risk.basis === "UNAVAILABLE"} />
-              ) : (
-                <span className="text-muted-foreground">Not evaluated</span>
-              )}
-            </dd>
-          </div>
-        </dl>
-
-        <div className="rounded-lg border border-dashed p-3 text-xs">
-          <span className="font-medium">Next action: </span>
-          <span className="text-foreground/80">{opp.nextAction}</span>
-        </div>
       </div>
 
       <footer className="relative z-10 flex items-center justify-between gap-2 border-t px-3 py-2">
