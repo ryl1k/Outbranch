@@ -28,6 +28,10 @@ Every brand eventually asks the same question: *where should we grow next?* The 
 
 People who love Aesop also love particular Paris boutique hotels, Liberty London, Le Labo and certain alt-pop artists. Each of those affinities is a door: a partner, a product line, a city, a retail channel. Qloo's Taste AI can see those doors across music, film, dining, fashion, travel and brands. We built the agent that walks through them and comes back with a business case.
 
+### Who it's for
+
+Brand partnership, licensing and expansion leads at consumer brands, entertainment studios and the agencies that serve them. Today they answer "who should we partner with, and where next?" with trend decks, consultant workshops and gut feel: slow, expensive and impossible to audit. Outbranch gives them a shortlist in minutes, where every idea shows the taste data and sources behind it, so they can defend it in the room and decide what to test first.
+
 ### What it does
 
 Outbranch is a research agent for brand, partnership and expansion teams. You type one thing (a brand, a company, a product, an entertainment IP or a website) and it runs a full study:
