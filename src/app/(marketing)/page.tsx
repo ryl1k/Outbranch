@@ -153,7 +153,7 @@ export default function LandingPage() {
         </div>
         <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-4 pt-8 sm:px-8 lg:pb-24">
           <div className="max-w-xl">
-            <p className="animate-rise text-xs font-medium tracking-[0.18em] text-rose uppercase">Cultural intelligence for real growth</p>
+            <p className="animate-rise text-xs font-medium tracking-[0.18em] text-rose uppercase">Real growth from Qloo’s cultural intelligence</p>
             <h1 className="mt-5 animate-rise font-editorial text-[clamp(2.75rem,5.4vw,5rem)] leading-[1.02] text-balance text-ivory [animation-delay:100ms]">
               Turn cultural signals into <span className="text-rose">what’s next.</span>
             </h1>

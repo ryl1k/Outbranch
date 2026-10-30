@@ -78,7 +78,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
               <strong className="font-semibold">Showcase project.</strong> A completed Outbranch study you can explore. It is
               read-only.
             </span>
-            <Link href="/projects/new" className="font-medium text-primary hover:underline">
+            <Link href="/projects/new" className="font-medium text-primary-ink hover:underline">
               Research your own brand
             </Link>
           </div>

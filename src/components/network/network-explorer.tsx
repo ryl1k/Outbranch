@@ -417,7 +417,7 @@ function RelationshipList({ graph, projectId }: { graph: CulturalGraph; projectI
                     {e.detail.affinityRank !== undefined && <span className="font-mono">rank #{e.detail.affinityRank}</span>}
                     {e.detail.domain && <span>{DOMAIN_LABELS[e.detail.domain]}</span>}
                     {opp?.opportunityId && (
-                      <Link className="text-primary hover:underline" href={`/projects/${projectId}/opportunities/${opp.opportunityId}`}>
+                      <Link className="text-primary-ink hover:underline" href={`/projects/${projectId}/opportunities/${opp.opportunityId}`}>
                         Open
                       </Link>
                     )}
