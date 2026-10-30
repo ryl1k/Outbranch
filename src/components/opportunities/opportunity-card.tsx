@@ -97,8 +97,10 @@ export function OpportunityCard({
             </p>
             <ul className="flex flex-wrap gap-1.5">
               {entities.map((e) => (
-                <li key={e.id}>
-                  <Badge variant="rose">{e.name}</Badge>
+                <li key={e.id} className="max-w-full">
+                  <Badge variant="rose" className="max-w-full" title={e.name}>
+                    <span className="truncate">{e.name}</span>
+                  </Badge>
                 </li>
               ))}
             </ul>
@@ -172,7 +174,7 @@ export function OpportunityCard({
             <TooltipContent>{excluded ? "Restore" : "Exclude from ranking and future runs"}</TooltipContent>
           </Tooltip>
         </div>
-        <Button asChild variant="ghost" size="sm" className="text-primary">
+        <Button asChild variant="ghost" size="sm" className="text-primary dark:text-white dark:hover:text-primary">
           <Link href={`/projects/${projectId}/opportunities/${opp.id}`}>
             View details <ArrowRight />
           </Link>
