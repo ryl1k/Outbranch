@@ -181,7 +181,7 @@ export function BrandVerification({ projectId, data }: { projectId: string; data
                   href={profile.officialUrl}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-primary"
+                  className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-primary-ink"
                 >
                   {profile.officialUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")} <ExternalLink className="size-3" />
                 </a>
@@ -226,7 +226,7 @@ export function BrandVerification({ projectId, data }: { projectId: string; data
                       href={s.url ?? undefined}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="mt-1 block font-medium hover:text-primary"
+                      className="mt-1 block font-medium hover:text-primary-ink"
                     >
                       {s.title}
                     </a>
@@ -403,7 +403,7 @@ export function BrandVerification({ projectId, data }: { projectId: string; data
                           href={c.source.url}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+                          className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary-ink"
                         >
                           {c.source.publisher ?? c.source.title} <ExternalLink className="size-3" />
                         </a>

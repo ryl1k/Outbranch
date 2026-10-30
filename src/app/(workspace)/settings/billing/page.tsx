@@ -92,7 +92,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
               </li>
             ))}
           </ul>
-          <Link href="/pricing" className="inline-block text-sm text-primary underline underline-offset-4">
+          <Link href="/pricing" className="inline-block text-sm text-primary-ink underline underline-offset-4">
             Compare plans
           </Link>
         </section>

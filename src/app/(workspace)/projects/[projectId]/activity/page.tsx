@@ -1,8 +1,7 @@
 import { Badge } from "@/components/ui/badge"
-import { UsageTable } from "@/components/workspace/usage-table"
+import { ResearchTrace } from "@/components/workspace/research-trace"
 import { assertProjectReadAccess } from "@/server/auth/session"
 import { db } from "@/server/db"
-import { usageSummary } from "@/server/usage/summary"
 
 export const metadata = { title: "Research log" }
 
@@ -32,26 +31,28 @@ function duration(start: Date | null, end: Date | null) {
 export default async function ActivityPage({ params }: PageProps<"/projects/[projectId]/activity">) {
   const { projectId } = await params
   await assertProjectReadAccess(projectId)
-  const [jobs, usage] = await Promise.all([
-    db.researchJob.findMany({
-      where: { projectId },
-      orderBy: { createdAt: "desc" },
-      include: { events: { orderBy: { createdAt: "asc" } }, constraints: { select: { iteration: true } }, opportunity: { select: { title: true } } },
-    }),
-    usageSummary({ projectId }),
-  ])
+  const jobs = await db.researchJob.findMany({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      events: { orderBy: { createdAt: "asc" } },
+      usage: { select: { provider: true, operation: true, ok: true, cacheHit: true, webSearches: true, createdAt: true } },
+      constraints: { select: { iteration: true } },
+      opportunity: { select: { title: true } },
+    },
+  })
 
   return (
-    <div className="space-y-10">
+    <div>
       <section className="space-y-4">
         <div className="space-y-1">
           <p className="eyebrow">Research log</p>
           <h2 className="text-xl font-semibold">Every research run, stage by stage</h2>
         </div>
         <ol className="space-y-3">
-          {jobs.map((j) => (
+          {jobs.map((j, i) => (
             <li key={j.id}>
-              <details className="group rounded-xl border bg-card">
+              <details className="group rounded-xl border bg-card" open={i === 0}>
                 <summary className="flex cursor-pointer list-none flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-medium">
@@ -65,6 +66,11 @@ export default async function ActivityPage({ params }: PageProps<"/projects/[pro
                   </div>
                   <Badge variant={STATUS[j.status]}>{j.status.toLowerCase()}</Badge>
                 </summary>
+                {j.usage.length > 0 && (
+                  <div className="border-t px-4 py-4">
+                    <ResearchTrace calls={j.usage} />
+                  </div>
+                )}
                 <ol className="space-y-1.5 border-t px-4 py-3 text-sm">
                   {j.events.map((e) => (
                     <li key={e.id} className="flex gap-3">
@@ -80,11 +86,6 @@ export default async function ActivityPage({ params }: PageProps<"/projects/[pro
             </li>
           ))}
         </ol>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Usage & cost for this project</h2>
-        <UsageTable usage={usage} />
       </section>
     </div>
   )

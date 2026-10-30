@@ -63,6 +63,8 @@ export function CheckoutButton({ className, label = "Subscribe" }: { className?:
     start(async () => {
       try {
         // The server confirms the entitlement with RevenueCat; the browser's word is not enough.
+        // A full navigation on purpose: /api/billing/return is a route handler that redirects, not a page.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         if (await purchasePlan(plans, rcPackage)) window.location.assign("/api/billing/return")
       } catch (error) {
         console.error("[billing] checkout failed", error)
@@ -87,7 +89,7 @@ export function CheckoutButton({ className, label = "Subscribe" }: { className?:
               <li key={rcPackage.identifier}>
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-4 rounded-lg border p-4 text-left transition-colors hover:border-primary hover:bg-muted/50 dark:hover:border-rose"
+                  className="flex w-full items-center justify-between gap-4 rounded-lg border p-4 text-left transition-colors hover:border-primary-ink hover:bg-muted/50"
                   onClick={() => buy(choice, rcPackage)}
                 >
                   <span className="font-semibold">{PERIOD_LABELS[rcPackage.identifier] ?? rcPackage.webBillingProduct.title}</span>

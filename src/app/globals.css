@@ -42,6 +42,8 @@
   --primary: var(--brand-burgundy);
   --primary-hover: var(--brand-burgundy-600);
   --primary-foreground: var(--brand-ivory);
+  /* Primary-coloured text and icons: burgundy reads on porcelain, rose on aubergine. */
+  --primary-ink: var(--brand-burgundy);
   --secondary: var(--brand-porcelain-200);
   --secondary-foreground: var(--brand-aubergine);
   --muted: var(--brand-porcelain-200);
@@ -114,6 +116,7 @@
   --primary: var(--brand-burgundy);
   --primary-hover: var(--brand-burgundy-600);
   --primary-foreground: var(--brand-ivory);
+  --primary-ink: var(--brand-rose);
   --secondary: var(--brand-aubergine-700);
   --secondary-foreground: #f4e9ec;
   --muted: var(--brand-aubergine-700);
@@ -174,6 +177,7 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-ink: var(--primary-ink);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

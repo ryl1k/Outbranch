@@ -31,7 +31,7 @@ const JOB_TITLES: Record<string, string> = {
 const timeFmt = new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
 
 function EventIcon({ event, current }: { event: ProgressEvent; current: boolean }) {
-  if (current) return <Loader2 className="size-4 animate-spin text-primary" />
+  if (current) return <Loader2 className="size-4 animate-spin text-primary-ink" />
   if (event.level === "ERROR") return <XCircle className="size-4 text-destructive" />
   if (event.level === "WARNING") return <AlertTriangle className="size-4 text-warning" />
   if (event.level === "SUCCESS") return <CheckCircle2 className="size-4 text-success" />
