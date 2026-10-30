@@ -4,9 +4,9 @@ import { CheckoutButton, ManageBillingButton } from "@/components/billing/billin
 import { PageHeader } from "@/components/workspace/primitives"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { PRO_FEATURES, PRO_PRICE_USD } from "@/lib/billing"
+import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE_USD } from "@/lib/billing"
 import { requireViewer } from "@/server/auth/session"
-import { getBillingState } from "@/server/billing/entitlements"
+import { getBillingState, getWorkspaceActivity } from "@/server/billing/entitlements"
 
 export const metadata = { title: "Billing" }
 
@@ -26,14 +26,33 @@ function Meter({ label, used, limit }: { label: string; used: number; limit: num
   )
 }
 
+const ACTIVITY = [
+  ["projects", "Research projects"],
+  ["studies", "Studies completed"],
+  ["opportunities", "Opportunities found"],
+  ["deepDives", "Deep dives"],
+  ["reports", "Reports"],
+] as const
+
 export default async function BillingPage({ searchParams }: PageProps<"/settings/billing">) {
   const viewer = await requireViewer()
   const checkout = (await searchParams).checkout
-  const state = await getBillingState(viewer.workspace.id, { isGuest: viewer.user.isGuest })
+  const [state, activity] = await Promise.all([
+    getBillingState(viewer.workspace.id, { isGuest: viewer.user.isGuest }),
+    getWorkspaceActivity(viewer.workspace.id),
+  ])
 
   return (
     <div className="workspace-width mx-auto space-y-8 px-4 py-8 sm:px-8 sm:py-10">
-      <PageHeader eyebrow="Workspace" title="Billing" description="Your plan, what it includes and how much of the free allowance you have used." />
+      <PageHeader
+        eyebrow="Workspace"
+        title="Billing"
+        description={
+          state.subscribed
+            ? "Your plan, what it includes and what this workspace has produced."
+            : "Your plan, what it includes and how much of the free allowance you have used."
+        }
+      />
 
       {checkout === "success" && (
         <p className="flex items-center gap-2 rounded-lg border border-success/30 bg-success-soft p-3 text-sm text-success" role="status">
@@ -81,6 +100,38 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </div>
         )}
       </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-semibold">Your activity</h2>
+          <p className="text-xs text-muted-foreground">All time, with the last 30 days below each figure</p>
+        </div>
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {ACTIVITY.map(([key, label]) => (
+            <div key={key} className="rounded-xl border bg-card p-4">
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">{activity[key].total}</dd>
+              <dd className="text-xs text-muted-foreground">{activity[key].recent} in the last 30 days</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {state.subscribed && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Included in your plan</h2>
+          <ul className="grid gap-2 text-sm sm:grid-cols-2">
+            {PRO_FEATURES.map((feature) => (
+              <li key={feature} className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-sage-strong" aria-hidden /> {feature}
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm text-muted-foreground">
+            Billing, invoices and cancellation are handled in <span className="text-foreground">Manage billing</span>. If you cancel, Pro stays active until the end of the paid period, then the free limits ({FREE_FEATURES[0].toLowerCase()}, {FREE_FEATURES[1].toLowerCase()}) apply again. Nothing you have already created is deleted.
+          </p>
+        </section>
+      )}
 
       {!state.subscribed && (
         <section className="space-y-3">
