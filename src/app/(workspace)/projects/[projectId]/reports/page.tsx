@@ -3,7 +3,7 @@ import { FileText } from "lucide-react"
 import { GenerateReportButton } from "@/components/reports/report-actions"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/workspace/primitives"
-import { assertProjectReadAccess } from "@/server/auth/session"
+import { requireProjectRead } from "@/server/auth/session"
 import { db } from "@/server/db"
 
 export const metadata = { title: "Reports" }
@@ -12,7 +12,7 @@ const fmt = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "sho
 
 export default async function ReportsPage({ params }: PageProps<"/projects/[projectId]/reports">) {
   const { projectId } = await params
-  await assertProjectReadAccess(projectId)
+  await requireProjectRead(projectId)
   const [reports, shortlist] = await Promise.all([
     db.report.findMany({ where: { projectId }, orderBy: { createdAt: "desc" }, select: { id: true, title: true, kind: true, createdAt: true } }),
     db.opportunity.findMany({

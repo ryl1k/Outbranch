@@ -17,7 +17,7 @@ export async function getBillingState(workspaceId: string, { isGuest = false } =
   const [workspace, projects, deepDives] = await Promise.all([
     db.workspace.findUniqueOrThrow({
       where: { id: workspaceId },
-      select: { subscriptionStatus: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
+      select: { subscriptionStatus: true, currentPeriodEnd: true, cancelAtPeriodEnd: true, monoCardToken: true },
     }),
     db.project.count({ where: { workspaceId } }),
     db.researchJob.count({
@@ -29,7 +29,7 @@ export async function getBillingState(workspaceId: string, { isGuest = false } =
     status: workspace.subscriptionStatus,
     currentPeriodEnd: workspace.currentPeriodEnd,
     cancelAtPeriodEnd: workspace.cancelAtPeriodEnd,
-    hasCustomer: workspace.subscriptionStatus !== null,
+    canChangeRenewal: Boolean(workspace.monoCardToken),
     usage: { projects, deepDives },
     limits: { ...FREE_LIMITS, projects: isGuest ? GUEST_PROJECT_LIMIT : FREE_LIMITS.projects },
   }

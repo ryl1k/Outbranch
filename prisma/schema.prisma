@@ -60,13 +60,32 @@ model Workspace {
   name      String
   createdAt DateTime @default(now())
 
-  /// RevenueCat billing state (the workspace id is the App User ID), kept in sync by checkout return and webhooks.
+  /// Billing state, kept in sync by monobank webhooks, the checkout return and the renewal job.
   subscriptionStatus String?
   currentPeriodEnd   DateTime?
   cancelAtPeriodEnd  Boolean   @default(false)
+  /// Saved card that renewals charge.
+  monoCardToken      String?
 
-  members  WorkspaceMember[]
-  projects Project[]
+  members      WorkspaceMember[]
+  projects     Project[]
+  monoInvoices MonoInvoice[]
+}
+
+/// One payment attempt. periodKey is set on renewals and stops a period being charged twice.
+model MonoInvoice {
+  id           String    @id @default(cuid())
+  invoiceId    String?   @unique
+  workspaceId  String
+  periodKey    String?   @unique
+  status       String    @default("created")
+  modifiedDate DateTime?
+  appliedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
 }
 
 enum WorkspaceRole {

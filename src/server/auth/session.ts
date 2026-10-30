@@ -1,6 +1,6 @@
 import "server-only"
 import { cache } from "react"
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { db } from "@/server/db"
 import { auth } from "./config"
 
@@ -68,4 +68,14 @@ export async function assertProjectReadAccess(projectId: string, viewer?: Viewer
   })
   if (!project) throw new AuthError("Project not found", 404)
   return { viewer: v, project, readOnly: project.workspaceId !== v.workspace.id }
+}
+
+/** For pages: a project the viewer cannot read shows the 404 page instead of crashing the render. */
+export async function requireProjectRead(projectId: string) {
+  try {
+    return await assertProjectReadAccess(projectId)
+  } catch (error) {
+    if (error instanceof AuthError && error.status === 404) notFound()
+    throw error
+  }
 }

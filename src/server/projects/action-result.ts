@@ -3,7 +3,7 @@ import { unstable_rethrow } from "next/navigation"
 import { z } from "zod"
 import { AuthError } from "@/server/auth/session"
 import { PaywallError } from "@/server/billing/entitlements"
-import { BillingNotConfiguredError } from "@/server/billing/revenuecat"
+import { BillingNotConfiguredError } from "@/server/billing/mono"
 import { RateLimitError } from "@/server/security/rate-limit"
 
 /** `paywall` marks failures caused by a plan limit, so the UI can offer an upgrade. */

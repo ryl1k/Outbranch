@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { CheckCircle2 } from "lucide-react"
-import { CheckoutButton, ManageBillingButton } from "@/components/billing/billing-buttons"
+import { CheckoutButton, RenewalButton } from "@/components/billing/billing-buttons"
 import { PageHeader } from "@/components/workspace/primitives"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -40,6 +40,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           <CheckCircle2 className="size-4" /> Thank you. Your Pro plan is active.
         </p>
       )}
+      {checkout === "failed" && (
+        <p className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning" role="status">
+          The payment did not go through and you have not been charged. You can try again below.
+        </p>
+      )}
       {checkout === "pending" && !state.subscribed && (
         <p className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning" role="status">
           We have not received confirmation of your payment yet. This page will show Pro as soon as the payment is confirmed. Refresh in a moment.
@@ -59,12 +64,12 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
                     : `$${PRO_PRICE_USD} per month. Renews on ${dateFmt.format(state.currentPeriodEnd)}.`
                   : `$${PRO_PRICE_USD} per month.`
                 : state.status
-                  ? `Your last subscription is ${state.status.replaceAll("_", " ")}. Update your payment method to restore Pro.`
+                  ? `Your last subscription is ${state.status.replaceAll("_", " ")}. Subscribe again to restore Pro.`
                   : "Upgrade for unlimited projects and deep dives."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {state.hasCustomer && <ManageBillingButton />}
+            {state.subscribed && state.canChangeRenewal && <RenewalButton cancelled={state.cancelAtPeriodEnd} />}
             {!state.subscribed && !viewer.user.isGuest && <CheckoutButton label={`Upgrade for $${PRO_PRICE_USD} / month`} />}
             {!state.subscribed && viewer.user.isGuest && (
               <Button asChild>
