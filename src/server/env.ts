@@ -23,10 +23,10 @@ const schema = z.object({
   GLOBAL_JOBS_PER_HOUR: z.coerce.number().int().positive().default(60),
   DAILY_SPEND_LIMIT_USD: z.coerce.number().positive().optional(),
   /** Billing: leave unset to disable checkout (the free-tier limits still apply). */
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  /** Public origin used for Stripe return URLs; derived from the request when unset. */
-  APP_URL: z.string().url().optional(),
+  REVENUECAT_PUBLIC_KEY: z.string().optional(),
+  REVENUECAT_SECRET_KEY: z.string().optional(),
+  REVENUECAT_WEBHOOK_AUTH: z.string().optional(),
+  REVENUECAT_ENTITLEMENT_ID: z.string().default("outbranch_pro"),
   INNGEST_EVENT_KEY: z.string().optional(),
   INNGEST_SIGNING_KEY: z.string().optional(),
 })

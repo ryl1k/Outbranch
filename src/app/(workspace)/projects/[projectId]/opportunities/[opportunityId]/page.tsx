@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ExternalLink, Info, Link2 } from "lucide-react"
+import { ArrowLeft, ChevronDown, ExternalLink, Info, Link2 } from "lucide-react"
 import { CategoryBadge, EvidenceStrengthBadge, LevelMeter } from "@/components/opportunities/badges"
 import { OpportunityActions } from "@/components/opportunities/opportunity-actions"
 import { ClaimStatusBadge } from "@/components/research/evidence"
@@ -387,8 +387,11 @@ export default async function OpportunityPage({ params }: PageProps<"/projects/[
         </article>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:h-fit">
-          <div className="rounded-xl border bg-card p-4 shadow-soft">
-            <p className="eyebrow">Outbranch assessment</p>
+          <details className="group rounded-xl border bg-card p-4 shadow-soft">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+              <span className="font-heading text-sm font-semibold">Outbranch assessment</span>
+              <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+            </summary>
             {criteria.success ? (
               <ul className="mt-3 space-y-3">
                 {CRITERIA.map((k) => {
@@ -413,7 +416,7 @@ export default async function OpportunityPage({ params }: PageProps<"/projects/[
             <p className="mt-4 border-t pt-3 text-[11px] leading-relaxed text-muted-foreground">
               Levels are model assessments unless marked measured. Outbranch never states success probabilities.
             </p>
-          </div>
+          </details>
         </aside>
       </div>
     </div>

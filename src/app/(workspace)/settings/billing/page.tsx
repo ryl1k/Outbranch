@@ -42,7 +42,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       )}
       {checkout === "pending" && !state.subscribed && (
         <p className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning" role="status">
-          We have not received confirmation of your payment yet. This page will show Pro as soon as Stripe confirms it. Refresh in a moment.
+          We have not received confirmation of your payment yet. This page will show Pro as soon as the payment is confirmed. Refresh in a moment.
         </p>
       )}
 
