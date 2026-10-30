@@ -57,3 +57,6 @@ styles.png
 # evaluation detail (contains Qloo data; never commit)
 /eval-output/
 .neon
+
+# Devpost submission copy (kept local)
+/docs/HACKATHON.md
