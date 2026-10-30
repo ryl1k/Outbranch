@@ -84,7 +84,7 @@ export function ProjectOverview({ projectId, portfolio }: { projectId: string; p
         <section className="rounded-xl border bg-card p-5 shadow-soft">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Top growth opportunities</h3>
-            <Link href={`/projects/${projectId}/opportunities`} className="text-xs text-primary hover:underline">View all</Link>
+            <Link href={`/projects/${projectId}/opportunities`} className="text-xs text-primary-ink hover:underline">View all</Link>
           </div>
           <ol className="mt-4 divide-y">
             {top.map((o) => (
@@ -92,7 +92,7 @@ export function ProjectOverview({ projectId, portfolio }: { projectId: string; p
                 <Link href={`/projects/${projectId}/opportunities/${o.id}`} className="group flex items-start gap-3 py-3">
                   <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary font-mono text-xs text-primary-foreground">{o.rank}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium group-hover:text-primary">{o.title}</p>
+                    <p className="font-medium group-hover:text-primary-ink">{o.title}</p>
                     <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{o.summary}</p>
                     <div className="mt-2"><EvidenceStrengthBadge strength={o.evidenceStrength} /></div>
                   </div>
@@ -138,7 +138,7 @@ export function ProjectOverview({ projectId, portfolio }: { projectId: string; p
           ))}
         </section>
         <section className="space-y-3">
-          <h3 className="flex items-center gap-2 font-semibold"><Bookmark className="size-4 text-primary" /> Shortlist</h3>
+          <h3 className="flex items-center gap-2 font-semibold"><Bookmark className="size-4 text-primary-ink" /> Shortlist</h3>
           {saved.length === 0 ? (
             <p className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">Save opportunities to build a shortlist for comparison and reporting.</p>
           ) : (

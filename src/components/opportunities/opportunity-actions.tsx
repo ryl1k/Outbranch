@@ -41,7 +41,7 @@ export function OpportunityActions({
         disabled={pending}
         onClick={() => run(() => toggleShortlist(projectId, opportunityId, !shortlisted), shortlisted ? "Removed from shortlist" : "Saved")}
       >
-        {shortlisted ? <BookmarkCheck className="text-primary" /> : <Bookmark />}
+        {shortlisted ? <BookmarkCheck className="text-primary-ink" /> : <Bookmark />}
         {shortlisted ? "Saved" : "Save"}
       </Button>
       <GenerateReportButton projectId={projectId} opportunityId={opportunityId} label="Brief" variant="outline" />

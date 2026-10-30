@@ -67,7 +67,7 @@ export function OpportunityCard({
             {excluded && <Badge variant="muted">Excluded</Badge>}
           </div>
           <h3 className="text-base leading-snug font-semibold">
-            <Link href={`/projects/${projectId}/opportunities/${opp.id}`} className="after:absolute after:inset-0 hover:text-primary">
+            <Link href={`/projects/${projectId}/opportunities/${opp.id}`} className="after:absolute after:inset-0 hover:text-primary-ink">
               {opp.title}
             </Link>
           </h3>
@@ -154,7 +154,7 @@ export function OpportunityCard({
                 aria-label={opp.shortlisted ? "Remove from shortlist" : "Save to shortlist"}
                 onClick={() => act(() => toggleShortlist(projectId, opp.id, !opp.shortlisted), opp.shortlisted ? "Removed from shortlist" : "Saved to shortlist")}
               >
-                {opp.shortlisted ? <BookmarkCheck className="text-primary" /> : <Bookmark />}
+                {opp.shortlisted ? <BookmarkCheck className="text-primary-ink" /> : <Bookmark />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>{opp.shortlisted ? "Saved" : "Save"}</TooltipContent>
@@ -174,7 +174,7 @@ export function OpportunityCard({
             <TooltipContent>{excluded ? "Restore" : "Exclude from ranking and future runs"}</TooltipContent>
           </Tooltip>
         </div>
-        <Button asChild variant="ghost" size="sm" className="text-primary dark:text-white dark:hover:text-primary">
+        <Button asChild variant="ghost" size="sm" className="text-primary-ink">
           <Link href={`/projects/${projectId}/opportunities/${opp.id}`}>
             View details <ArrowRight />
           </Link>
