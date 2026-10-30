@@ -178,38 +178,40 @@ export default async function ComparePage({ params, searchParams }: PageProps<"/
         <CompareSelector projectId={projectId} all={all} selected={opportunities.map((o) => o.id)} />
       </div>
 
-      {/* Desktop: aligned matrix. Mobile: one card per opportunity. */}
-      <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
-        <div className="grid border-b bg-muted/40" style={cols}>
-          <div className="p-4" />
-          {opportunities.map((o) => (
-            <div key={o.id} className="space-y-2 border-l p-4">
-              <CategoryBadge category={o.category as OpportunityCategory} />
-              <Link href={`/projects/${projectId}/opportunities/${o.id}`} className="block font-semibold hover:text-primary-ink">
-                {o.rank ? `#${o.rank} ` : ""}
-                {o.title}
-              </Link>
-            </div>
-          ))}
-        </div>
+      {/* Desktop: one aligned table per group. Mobile: one card per opportunity. */}
+      <div className="hidden space-y-10 md:block">
         {GROUPS.map((g) => (
-          <div key={g.title}>
-            <div className="border-b bg-accent/40 px-4 py-2.5">
-              <p className="text-sm font-semibold">{g.title}</p>
+          <section key={g.title} className="space-y-3">
+            <div>
+              <h3 className="text-lg font-semibold">{g.title}</h3>
               <p className="text-xs text-muted-foreground">{g.note}</p>
             </div>
-            {g.rows.map((row) => (
-              <div key={row.label} className="grid border-b last:border-b-0" style={cols}>
-                <div className="p-4">
-                  <p className="text-xs font-medium">{row.label}</p>
-                  {row.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{row.hint}</p>}
-                </div>
+            <div className="overflow-x-auto rounded-xl border bg-card">
+              <div className="grid border-b bg-muted/40" style={cols}>
+                <div className="p-4" />
                 {opportunities.map((o) => (
-                  <div key={o.id} className="border-l p-4 text-sm">{row.render(o, analyses.get(o.id)!)}</div>
+                  <div key={o.id} className="space-y-2 border-l p-4">
+                    <CategoryBadge category={o.category as OpportunityCategory} />
+                    <Link href={`/projects/${projectId}/opportunities/${o.id}`} className="block font-semibold hover:text-primary-ink">
+                      {o.rank ? `#${o.rank} ` : ""}
+                      {o.title}
+                    </Link>
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
+              {g.rows.map((row) => (
+                <div key={row.label} className="grid border-b last:border-b-0" style={cols}>
+                  <div className="p-4">
+                    <p className="text-xs font-medium">{row.label}</p>
+                    {row.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{row.hint}</p>}
+                  </div>
+                  {opportunities.map((o) => (
+                    <div key={o.id} className="border-l p-4 text-sm">{row.render(o, analyses.get(o.id)!)}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
 

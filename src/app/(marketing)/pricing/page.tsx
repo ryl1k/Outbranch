@@ -100,7 +100,7 @@ export default function PricingPage() {
               <Suspense fallback={<Button size="lg" className="w-full" disabled>Loading…</Button>}>
                 <ProCta />
               </Suspense>
-              <p className="text-center text-xs text-muted-foreground">Billed monthly through Stripe. Cancel any time.</p>
+              <p className="text-center text-xs text-muted-foreground">Billed monthly. Cancel any time.</p>
             </div>
           </section>
         </div>

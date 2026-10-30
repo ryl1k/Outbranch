@@ -23,7 +23,7 @@ export const FREE_FEATURES = [
   "Reports and Markdown export",
 ] as const
 
-/** Stripe subscription states that grant the paid plan. */
+/** Subscription states that grant the paid plan. */
 const ACTIVE_STATUSES = new Set(["active", "trialing"])
 
 export function isActiveSubscription(status: string | null | undefined) {

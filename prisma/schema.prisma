@@ -60,12 +60,10 @@ model Workspace {
   name      String
   createdAt DateTime @default(now())
 
-  /// Stripe billing state, kept in sync by checkout return and webhooks.
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  subscriptionStatus   String?
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean   @default(false)
+  /// RevenueCat billing state (the workspace id is the App User ID), kept in sync by checkout return and webhooks.
+  subscriptionStatus String?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
 
   members  WorkspaceMember[]
   projects Project[]
