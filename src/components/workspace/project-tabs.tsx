@@ -72,7 +72,7 @@ export function ProjectTabs({ projectId, hasResults }: { projectId: string; hasR
             className={cn(
               "border-b-2 px-3 py-2.5 text-sm whitespace-nowrap transition-colors",
               active
-                ? "border-primary font-medium text-primary"
+                ? "border-primary-ink font-medium text-primary-ink"
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >

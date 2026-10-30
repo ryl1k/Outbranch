@@ -23,7 +23,7 @@ export default function NewProjectPage() {
       </div>
 
       <aside className="theme-dark relative hidden self-start overflow-hidden rounded-2xl bg-background p-6 text-foreground lg:block [html.theme-dark_&]:bg-card [html.theme-dark_&]:border [html.theme-dark_&]:border-border-strong">
-        <BranchLines className="pointer-events-none absolute -right-24 -bottom-10 h-64 w-[140%] opacity-50" />
+        <BranchLines showOrigin={false} className="pointer-events-none absolute -right-24 -bottom-10 h-64 w-[140%] opacity-50" />
         <p className="eyebrow relative text-rose">How it works</p>
         <ol className="relative mt-5 space-y-5">
           {STEPS.map(([title, body], i) => (

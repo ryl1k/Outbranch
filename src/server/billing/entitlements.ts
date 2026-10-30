@@ -57,3 +57,23 @@ export async function assertCanStartDeepDive(workspaceId: string) {
     throw new PaywallError(`The free plan includes ${FREE_LIMITS.deepDives} deep dives. Upgrade to Pro for unlimited deep research.`)
   }
 }
+
+/** What the workspace has produced, all time and over the last 30 days, for the billing page. */
+export async function getWorkspaceActivity(workspaceId: string) {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  const project = { workspaceId }
+  const count = (createdAt?: { gte: Date }) =>
+    Promise.all([
+      db.project.count({ where: { workspaceId, createdAt } }),
+      db.researchJob.count({ where: { project, kind: "DISCOVERY", status: { in: ["SUCCEEDED", "PARTIAL"] }, createdAt } }),
+      db.researchJob.count({ where: { project, kind: "DEEP_DIVE", status: { in: [...COUNTED_DEEP_DIVE_STATUSES] }, createdAt } }),
+      db.report.count({ where: { project, createdAt } }),
+      db.opportunity.count({ where: { project, createdAt } }),
+    ])
+  const [total, recent] = await Promise.all([count(), count({ gte: since })])
+  const keys = ["projects", "studies", "deepDives", "reports", "opportunities"] as const
+  return Object.fromEntries(keys.map((k, i) => [k, { total: total[i], recent: recent[i] }])) as Record<
+    (typeof keys)[number],
+    { total: number; recent: number }
+  >
+}

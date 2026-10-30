@@ -374,7 +374,7 @@ export default async function OpportunityPage({ params }: PageProps<"/projects/[
                     <div className="min-w-0">
                       <p>{cl.statement}</p>
                       {cl.source?.url && (
-                        <a href={cl.source.url} target="_blank" rel="noreferrer noopener" className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary">
+                        <a href={cl.source.url} target="_blank" rel="noreferrer noopener" className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary-ink">
                           {cl.source.publisher ?? cl.source.title} · retrieved {dateFmt.format(cl.source.retrievedAt)} <ExternalLink className="size-3" />
                         </a>
                       )}

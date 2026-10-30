@@ -192,7 +192,7 @@ export default async function ComparePage({ params, searchParams }: PageProps<"/
                 {opportunities.map((o) => (
                   <div key={o.id} className="space-y-2 border-l p-4">
                     <CategoryBadge category={o.category as OpportunityCategory} />
-                    <Link href={`/projects/${projectId}/opportunities/${o.id}`} className="block font-semibold hover:text-primary dark:hover:text-rose">
+                    <Link href={`/projects/${projectId}/opportunities/${o.id}`} className="block font-semibold hover:text-primary-ink">
                       {o.rank ? `#${o.rank} ` : ""}
                       {o.title}
                     </Link>

@@ -25,12 +25,15 @@ export const events = {
   jobCancelled: eventType("research/job.cancelled", { schema: z.object({ jobId: z.string() }) }),
 }
 
-/** Shared function options: bounded concurrency per workspace and cancellation by job id. */
+/**
+ * Shared function options: bounded concurrency per workspace and cancellation by job id.
+ * The global limit stays within the Inngest free plan's cap of 5 per function.
+ */
 export function jobOptions(id: string) {
   return {
     id,
     retries: 2 as const,
-    concurrency: [{ limit: 2, key: "event.data.workspaceId" }, { limit: 6 }] as [
+    concurrency: [{ limit: 2, key: "event.data.workspaceId" }, { limit: 5 }] as [
       { limit: number; key: string },
       { limit: number },
     ],

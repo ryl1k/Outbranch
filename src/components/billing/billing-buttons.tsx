@@ -32,8 +32,8 @@ export function RenewalButton({ className, cancelled }: { className?: string; ca
   const [pending, start] = useTransition()
   return (
     <Button
-      variant="outline"
-      className={className}
+      variant={cancelled ? "default" : "ghost"}
+      className={cancelled ? className : `text-destructive hover:text-destructive ${className ?? ""}`}
       disabled={pending}
       onClick={() =>
         start(async () => {
@@ -46,7 +46,7 @@ export function RenewalButton({ className, cancelled }: { className?: string; ca
         })
       }
     >
-      {pending && <Loader2 className="animate-spin" />} {cancelled ? "Resume subscription" : "Cancel subscription"}
+      {pending && <Loader2 className="animate-spin" />} {cancelled ? "Keep Pro" : "Cancel subscription"}
     </Button>
   )
 }

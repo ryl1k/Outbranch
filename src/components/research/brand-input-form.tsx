@@ -82,7 +82,7 @@ export function BrandInputForm() {
               key={ex}
               type="button"
               onClick={() => setIdentifier(ex)}
-              className="rounded-full border bg-card px-3 py-1 text-xs transition-colors hover:border-primary/40 hover:text-primary"
+              className="rounded-full border bg-card px-3 py-1 text-xs transition-colors hover:border-primary/40 hover:text-primary-ink"
             >
               {ex}
             </button>
