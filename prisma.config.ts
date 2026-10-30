@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Migrations need a direct connection; Neon pooled (PgBouncer) strings break prisma migrate.
+    url: process.env["DATABASE_URL_UNPOOLED"] ?? process.env["DATABASE_URL"],
   },
 });
