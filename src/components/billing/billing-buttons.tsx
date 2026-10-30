@@ -104,12 +104,23 @@ export function CheckoutButton({ className, label = "Subscribe" }: { className?:
   )
 }
 
-/** Redirects to the management page on success, so a returned result is always a failure. */
-export function ManageBillingButton({ className }: { className?: string }) {
+/**
+ * Opens RevenueCat's customer portal, where the card, invoices and cancellation live. Redirects on success,
+ * so a returned result is always a failure.
+ */
+export function ManageBillingButton({
+  className,
+  label = "Manage billing",
+  variant = "outline",
+}: {
+  className?: string
+  label?: string
+  variant?: React.ComponentProps<typeof Button>["variant"]
+}) {
   const [pending, start] = useTransition()
   return (
     <Button
-      variant="outline"
+      variant={variant}
       className={className}
       disabled={pending}
       onClick={() =>
@@ -119,7 +130,7 @@ export function ManageBillingButton({ className }: { className?: string }) {
         })
       }
     >
-      {pending && <Loader2 className="animate-spin" />} Manage billing
+      {pending && <Loader2 className="animate-spin" />} {label}
     </Button>
   )
 }
