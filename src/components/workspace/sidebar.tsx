@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { FolderKanban, Gauge, Menu, Plus } from "lucide-react"
+import { ThemeToggle } from "@/components/workspace/theme"
 import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -69,6 +70,7 @@ export function Sidebar({ viewer, signOut }: { viewer: ViewerSummary; signOut: R
       </div>
       <div className="space-y-2">
         <ViewerCard viewer={viewer} />
+        <ThemeToggle className="w-full justify-start text-muted-foreground" />
         {signOut}
       </div>
     </aside>
@@ -94,6 +96,7 @@ export function MobileNav({ viewer, signOut }: { viewer: ViewerSummary; signOut:
             <NavLinks />
             <div className="mt-auto space-y-2 pb-6">
               <ViewerCard viewer={viewer} />
+              <ThemeToggle className="w-full justify-start text-muted-foreground" />
               {signOut}
             </div>
           </div>

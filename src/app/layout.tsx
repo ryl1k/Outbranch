@@ -32,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${manrope.variable} ${newsreader.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full">

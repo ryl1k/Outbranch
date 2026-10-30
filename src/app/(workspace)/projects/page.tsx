@@ -36,7 +36,7 @@ export default async function ProjectsPage() {
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {showcases.map((p) => (
               <li key={p.id}>
-                <Link href={`/projects/${p.id}`} className="theme-dark group flex h-full flex-col rounded-xl bg-background p-5 text-foreground">
+                <Link href={`/projects/${p.id}`} className="theme-dark group flex h-full flex-col rounded-xl bg-background p-5 text-foreground [html.theme-dark_&]:bg-card [html.theme-dark_&]:border [html.theme-dark_&]:border-border-strong">
                   <span className="text-xs text-rose">Showcase · read-only</span>
                   <span className="mt-2 text-lg font-semibold group-hover:text-rose">{p.profile?.name ?? p.name}</span>
                   <span className="mt-1 text-xs text-muted-foreground">
