@@ -1,14 +1,14 @@
 import { Share2 } from "lucide-react"
 import { NetworkExplorer } from "@/components/network/network-explorer"
 import { DataModeBadge, EmptyState } from "@/components/workspace/primitives"
-import { assertProjectReadAccess } from "@/server/auth/session"
+import { requireProjectRead } from "@/server/auth/session"
 import { loadCulturalGraph } from "@/server/graph/load"
 
 export const metadata = { title: "Cultural network" }
 
 export default async function NetworkPage({ params }: PageProps<"/projects/[projectId]/network">) {
   const { projectId } = await params
-  const { project } = await assertProjectReadAccess(projectId)
+  const { project } = await requireProjectRead(projectId)
   const graph = await loadCulturalGraph(projectId)
 
   return (

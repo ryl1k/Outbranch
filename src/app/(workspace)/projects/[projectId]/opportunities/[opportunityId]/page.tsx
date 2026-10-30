@@ -18,7 +18,7 @@ import {
   type OpportunityCategory,
 } from "@/lib/schemas/discovery"
 import { stringListSchema } from "@/lib/schemas/brand"
-import { assertProjectReadAccess } from "@/server/auth/session"
+import { requireProjectRead } from "@/server/auth/session"
 import { ENTITY_TYPE_LABELS, type QlooEntityType } from "@/server/providers/qloo/types"
 import { getJobTimeline, getOpportunityDetail } from "@/server/projects/queries"
 
@@ -62,7 +62,7 @@ function Unavailable({ children }: { children: React.ReactNode }) {
 
 export default async function OpportunityPage({ params }: PageProps<"/projects/[projectId]/opportunities/[opportunityId]">) {
   const { projectId, opportunityId } = await params
-  const { project } = await assertProjectReadAccess(projectId)
+  const { project } = await requireProjectRead(projectId)
   const detail = await getOpportunityDetail(projectId, opportunityId)
   if (!detail) notFound()
   const { opp, activeJob, contributorNames } = detail

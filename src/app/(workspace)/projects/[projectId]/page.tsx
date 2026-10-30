@@ -7,7 +7,7 @@ import { BrandVerification } from "@/components/research/brand-verification"
 import { CandidatePicker } from "@/components/research/candidate-picker"
 import { ResearchProgress } from "@/components/research/research-progress"
 import { RetryButton } from "@/components/research/retry-button"
-import { assertProjectReadAccess } from "@/server/auth/session"
+import { requireProjectRead } from "@/server/auth/session"
 import { getBrandVerification, getCandidates, getJobTimeline, getOpportunityPortfolio } from "@/server/projects/queries"
 
 function serializeTimeline(jobs: Awaited<ReturnType<typeof getJobTimeline>>) {
@@ -29,7 +29,7 @@ function serializeTimeline(jobs: Awaited<ReturnType<typeof getJobTimeline>>) {
 
 export default async function ProjectPage({ params }: PageProps<"/projects/[projectId]">) {
   const { projectId } = await params
-  const { project } = await assertProjectReadAccess(projectId)
+  const { project } = await requireProjectRead(projectId)
   const timeline = serializeTimeline(await getJobTimeline(projectId))
   const progress = (
     <ResearchProgress projectId={projectId} initialJobs={timeline.jobs} initialEvents={timeline.events} />

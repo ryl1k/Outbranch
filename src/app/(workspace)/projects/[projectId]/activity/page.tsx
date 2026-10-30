@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { JOB_KIND, JOB_STATUS, jobDuration } from "@/components/workspace/job-labels"
 import { ResearchTrace } from "@/components/workspace/research-trace"
-import { assertProjectReadAccess } from "@/server/auth/session"
+import { requireProjectRead } from "@/server/auth/session"
 import { db } from "@/server/db"
 
 export const metadata = { title: "Research log" }
@@ -10,7 +10,7 @@ const fmt = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "sho
 
 export default async function ActivityPage({ params }: PageProps<"/projects/[projectId]/activity">) {
   const { projectId } = await params
-  await assertProjectReadAccess(projectId)
+  await requireProjectRead(projectId)
   const jobs = await db.researchJob.findMany({
     where: { projectId },
     orderBy: { createdAt: "desc" },

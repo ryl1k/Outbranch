@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { CheckCircle2 } from "lucide-react"
-import { CheckoutButton, ManageBillingButton } from "@/components/billing/billing-buttons"
+import { CheckoutButton, RenewalButton } from "@/components/billing/billing-buttons"
 import { PlanCards } from "@/components/billing/plan-cards"
 import { PageHeader } from "@/components/workspace/primitives"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       ? `Cancelled. You keep Pro until ${periodEnd ?? "the end of the paid period"}, then this workspace moves to Free.`
       : `$${PRO_PRICE_USD} per month${periodEnd ? `, renews on ${periodEnd}` : ""}.`
     : state.status
-      ? `Your last subscription is ${state.status.replaceAll("_", " ")}. Update your payment method to restore Pro.`
+      ? `Your last subscription is ${state.status.replaceAll("_", " ")}. Subscribe again to restore Pro.`
       : `Projects left: ${Math.max(0, state.limits.projects - state.usage.projects)} of ${state.limits.projects}. Deep dives left: ${Math.max(0, state.limits.deepDives - state.usage.deepDives)} of ${state.limits.deepDives}.`
 
   const upgrade = guest ? (
@@ -49,6 +49,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           <CheckCircle2 className="size-4" /> Thank you. Your Pro plan is active.
         </p>
       )}
+      {checkout === "failed" && (
+        <p className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning" role="status">
+          The payment did not go through and you have not been charged. You can try again below.
+        </p>
+      )}
       {checkout === "pending" && !state.subscribed && (
         <p className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning" role="status">
           We have not received confirmation of your payment yet. This page will show Pro as soon as the payment is confirmed. Refresh in a moment.
@@ -67,11 +72,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </Link>
         </div>
         <div className="flex flex-wrap gap-2">
-          {state.hasCustomer && <ManageBillingButton />}
-          {state.subscribed && !state.cancelAtPeriodEnd && (
-            <ManageBillingButton variant="ghost" label="Cancel subscription" className="text-destructive hover:text-destructive" />
-          )}
-          {state.subscribed && state.cancelAtPeriodEnd && <ManageBillingButton variant="default" label="Keep Pro" />}
+          {state.subscribed && state.canChangeRenewal && <RenewalButton cancelled={state.cancelAtPeriodEnd} />}
         </div>
       </section>
 
@@ -100,7 +101,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         <h2 id="how-billing-works" className="text-base font-semibold text-foreground">
           How billing works
         </h2>
-        <p>Manage billing opens a secure page where you change your card, download invoices or cancel.</p>
+        <p>Payments are taken on a secure monobank page. Your card is saved there and charged each month until you cancel here.</p>
         <p>
           If you cancel, Pro stays active until the end of the period you have paid for. After that, the free limits apply to new research. Nothing
           you have already created is deleted.

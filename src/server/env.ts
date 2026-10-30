@@ -23,10 +23,13 @@ const schema = z.object({
   GLOBAL_JOBS_PER_HOUR: z.coerce.number().int().positive().default(60),
   DAILY_SPEND_LIMIT_USD: z.coerce.number().positive().optional(),
   /** Billing: leave unset to disable checkout (the free-tier limits still apply). */
-  REVENUECAT_PUBLIC_KEY: z.string().optional(),
-  REVENUECAT_SECRET_KEY: z.string().optional(),
-  REVENUECAT_WEBHOOK_AUTH: z.string().optional(),
-  REVENUECAT_ENTITLEMENT_ID: z.string().default("outbranch_pro"),
+  MONO_TOKEN: z.string().optional(),
+  /** Price per month in minor units; defaults to the $100 Pro plan. */
+  MONO_AMOUNT_MINOR: z.coerce.number().int().positive().default(10000),
+  /** ISO 4217 code: 840 is USD, 980 is UAH. */
+  MONO_CCY: z.coerce.number().int().positive().default(840),
+  /** Public origin for monobank redirects and webhooks; derived from the request when unset. */
+  APP_URL: z.string().url().optional(),
   INNGEST_EVENT_KEY: z.string().optional(),
   INNGEST_SIGNING_KEY: z.string().optional(),
 })

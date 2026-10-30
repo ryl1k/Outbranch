@@ -1,7 +1,7 @@
 import "server-only"
 import { culturalRefListSchema, collaborationListSchema, productListSchema, stringListSchema } from "@/lib/schemas/brand"
 import type { Viewer } from "@/server/auth/session"
-import { assertProjectReadAccess } from "@/server/auth/session"
+import { requireProjectRead } from "@/server/auth/session"
 import { db } from "@/server/db"
 
 export async function listProjects(viewer: Viewer) {
@@ -26,7 +26,7 @@ export async function listShowcases(viewer: Viewer) {
 }
 
 export async function getProjectHeader(projectId: string) {
-  const { project, readOnly } = await assertProjectReadAccess(projectId)
+  const { project, readOnly } = await requireProjectRead(projectId)
   const [profile, latestJob] = await Promise.all([
     db.brandProfile.findUnique({ where: { projectId }, include: { qlooEntity: true } }),
     db.researchJob.findFirst({ where: { projectId }, orderBy: { createdAt: "desc" } }),

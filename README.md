@@ -97,7 +97,7 @@ This measures groundedness, not commercial success; the write-up explains the li
 | Agent runtime | Inngest durable workflows, Server-Sent Events for live progress |
 | App | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, React Flow |
 | Data and auth | PostgreSQL on Neon, Prisma 7, Auth.js (guest, email, GitHub) |
-| Hosting and billing | Vercel, RevenueCat |
+| Hosting and billing | Vercel, plata by mono |
 | Quality | Vitest (89 tests), Playwright, GitHub Actions |
 
 ---
