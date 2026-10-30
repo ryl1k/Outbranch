@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="arm" x1="10" y1="45" x2="78" y2="11" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f6dfe4"/><stop offset="1" stop-color="#f9ecef"/>
+    </linearGradient>
+    <linearGradient id="low" x1="30" y1="47" x2="78" y2="74" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e7b9c4"/><stop offset="1" stop-color="#f9ecef"/>
+    </linearGradient>
+    <linearGradient id="petal" x1="44" y1="45" x2="100" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c4798b" stop-opacity="0.6"/><stop offset="1" stop-color="#e4a9b6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#1A0E14"/>
+  <g transform="translate(7.5 10.5) scale(0.5)" fill="none" stroke-linecap="round">
+    <path d="M 44 44 C 60 43, 76 34.5, 92.6 34.3 A 8.3 8.3 0 0 1 92.6 50.9 C 76 50.9, 60 47.5, 44 46.6 Z" fill="url(#petal)"/>
+    <path d="M 30 46.5 C 45 48, 62 58, 77.8 74.1" stroke="url(#low)" stroke-width="14.8"/>
+    <path d="M 9.6 45.4 C 33 45, 55 37, 77.8 11.1" stroke="url(#arm)" stroke-width="14.8"/>
+  </g>
+</svg>

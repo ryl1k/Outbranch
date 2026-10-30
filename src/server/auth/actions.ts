@@ -1,0 +1,73 @@
+"use server"
+
+import { AuthError } from "next-auth"
+import { redirect } from "next/navigation"
+import { z } from "zod"
+import { db } from "@/server/db"
+import { hashPassword } from "@/server/auth/password"
+import { signIn } from "@/server/auth/config"
+import { safeNext } from "@/server/auth/next"
+import { ensurePersonalWorkspace } from "@/server/auth/workspace"
+import { Prisma } from "@/generated/prisma/client"
+
+/** An error, plus what was typed: React resets the form after an action, so the fields are refilled from this. */
+export type AuthFormState = { error?: string; email?: string; name?: string } | undefined
+
+const credentials = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters.").max(200),
+})
+
+export async function loginAction(_: AuthFormState, form: FormData): Promise<AuthFormState> {
+  const redirectTo = safeNext(form.get("next"))
+  const email = String(form.get("email") ?? "")
+  try {
+    await signIn("password", {
+      email,
+      password: String(form.get("password") ?? ""),
+      redirectTo,
+    })
+  } catch (err) {
+    if (err instanceof AuthError) return { error: "Incorrect email or password.", email }
+    throw err // the redirect on success is thrown and must propagate
+  }
+}
+
+export async function guestSignInAction(form: FormData) {
+  const redirectTo = safeNext(form.get("next"))
+  try {
+    await signIn("guest", { redirectTo })
+  } catch (err) {
+    if (err instanceof AuthError) redirect(`/signin?error=guest_limit&next=${encodeURIComponent(redirectTo)}`)
+    throw err // the redirect on success is thrown and must propagate
+  }
+}
+
+export async function signUpAction(_: AuthFormState, form: FormData): Promise<AuthFormState> {
+  const redirectTo = safeNext(form.get("next"))
+  const parsed = credentials.safeParse({ email: form.get("email"), password: form.get("password") })
+  const name = String(form.get("name") ?? "").trim().slice(0, 80) || null
+  const typed = { email: String(form.get("email") ?? ""), name: name ?? undefined }
+  if (!parsed.success) return { error: parsed.error.issues[0].message, ...typed }
+
+  const exists = { error: "An account with this email already exists.", ...typed }
+  if (await db.user.findUnique({ where: { email: parsed.data.email } })) return exists
+  let userId: string
+  try {
+    const user = await db.user.create({
+      data: { email: parsed.data.email, name, passwordHash: await hashPassword(parsed.data.password) },
+    })
+    userId = user.id
+  } catch (err) {
+    // Two sign-ups for one address at the same moment: the unique index decides.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") return exists
+    throw err
+  }
+  await ensurePersonalWorkspace(userId, name)
+
+  const login = new FormData()
+  login.set("email", parsed.data.email)
+  login.set("password", parsed.data.password)
+  login.set("next", redirectTo)
+  return loginAction(undefined, login)
+}

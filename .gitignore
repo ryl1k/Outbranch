@@ -44,3 +44,16 @@ next-env.d.ts
 # private brief / reference assets
 prompt.md
 styles.png
+
+# local tooling output
+.playwright-mcp/
+
+/src/generated/prisma
+
+# e2e artifacts
+/test-results/
+/playwright-report/
+
+# evaluation detail (contains Qloo data; never commit)
+/eval-output/
+.neon

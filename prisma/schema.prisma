@@ -1,0 +1,665 @@
+// Outbranch domain model.
+// Three kinds of knowledge are kept strictly apart:
+//   1. Qloo cultural signals      -> QlooEntity / QlooTag / CulturalRelationship
+//   2. External commercial facts  -> ResearchSource / Claim
+//   3. AI-generated hypotheses    -> CulturalInsight / Opportunity / OpportunityEvaluation
+// EvidenceReference links hypotheses to the evidence that supports them.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Identity & tenancy
+// ---------------------------------------------------------------------------
+
+model User {
+  id         String   @id @default(cuid())
+  email      String?  @unique
+  name       String?
+  image      String?
+  passwordHash String?
+  isGuest    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  memberships WorkspaceMember[]
+  projects    Project[]         @relation("ProjectCreator")
+  guestDevice GuestDevice?
+}
+
+/// Ties a browser to its guest user and caps new guests per IP. Values are keyed hashes.
+model GuestDevice {
+  id         String   @id @default(cuid())
+  deviceHash String   @unique
+  ipHash     String
+  userId     String   @unique
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ipHash, createdAt])
+}
+
+/// Failed password sign-ins, kept briefly to throttle guessing across serverless instances.
+model LoginFailure {
+  id        String   @id @default(cuid())
+  email     String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  /// Stripe billing state, kept in sync by checkout return and webhooks.
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+
+  members  WorkspaceMember[]
+  projects Project[]
+}
+
+enum WorkspaceRole {
+  OWNER
+  MEMBER
+}
+
+model WorkspaceMember {
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(OWNER)
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Projects & research lifecycle
+// ---------------------------------------------------------------------------
+
+enum ProjectStage {
+  INPUT // created, nothing researched yet
+  RESOLVING // identifying which entity the user meant
+  NEEDS_SELECTION // ambiguous identifier, user must pick a candidate
+  RESEARCHING_BRAND
+  NEEDS_CONFIRMATION // brand profile ready for user verification
+  CONFIGURING // profile confirmed, analysis not started
+  DISCOVERING
+  READY // opportunities available
+  FAILED
+}
+
+enum DataMode {
+  LIVE
+  FIXTURE
+}
+
+model Project {
+  id          String       @id @default(cuid())
+  workspaceId String
+  createdById String
+  name        String
+  identifier  String // what the user typed: name, URL or description
+  stage       ProjectStage @default(INPUT)
+  dataMode    DataMode     @default(LIVE)
+  isShowcase  Boolean      @default(false)
+  userContext Json? // optional products / industry / market / objectives the user supplied
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  archivedAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy User      @relation("ProjectCreator", fields: [createdById], references: [id])
+
+  candidates    BrandCandidate[]
+  profile       BrandProfile?
+  themes        BrandTheme[]
+  jobs          ResearchJob[]
+  events        ResearchEvent[]
+  sources       ResearchSource[]
+  claims        Claim[]
+  relationships CulturalRelationship[]
+  insights      CulturalInsight[]
+  constraints   AnalysisConstraints[]
+  opportunities Opportunity[]
+  evidence      EvidenceReference[]
+  shortlists    Shortlist[]
+  comparisons   ComparisonSet[]
+  reports       Report[]
+  usage         UsageRecord[]
+
+  @@index([workspaceId, updatedAt])
+}
+
+model BrandCandidate {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  kind        String // brand | company | product | entertainment_ip | ...
+  description String
+  url         String?
+  parentName  String? // owning company when the candidate is a sub-brand
+  selected    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum ProfileStatus {
+  DRAFT
+  CONFIRMED
+}
+
+model BrandProfile {
+  id             String        @id @default(cuid())
+  projectId      String        @unique
+  status         ProfileStatus @default(DRAFT)
+  name           String
+  entityKind     String
+  officialUrl    String?
+  summary        String
+  industry       String?
+  positioning    String?
+  /// Structured lists validated by zod (see src/lib/schemas/brand.ts)
+  products       Json          @default("[]")
+  audiences      Json          @default("[]")
+  markets        Json          @default("[]")
+  competitors    Json          @default("[]")
+  collaborations Json          @default("[]")
+  culturalRefs   Json          @default("[]") // named cultural references to resolve in Qloo
+  qlooEntityId   String? // canonical Qloo entity for the brand itself, if one exists
+  version        Int           @default(1)
+  confirmedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  qlooEntity QlooEntity? @relation(fields: [qlooEntityId], references: [id])
+}
+
+enum ThemeResolution {
+  UNRESOLVED
+  RESOLVED
+  NO_MATCH
+}
+
+/// A natural-language brand theme. Only `tag` (when RESOLVED) is a real Qloo tag.
+model BrandTheme {
+  id         String          @id @default(cuid())
+  projectId  String
+  label      String
+  resolution ThemeResolution @default(UNRESOLVED)
+  tagId      String?
+  createdAt  DateTime        @default(now())
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag     QlooTag? @relation(fields: [tagId], references: [id])
+
+  @@unique([projectId, label])
+}
+
+enum JobKind {
+  RESOLVE_ENTITY
+  BRAND_RESEARCH
+  DISCOVERY // cultural research + opportunity generation + evaluation
+  DEEP_DIVE
+  REPORT
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  PARTIAL // finished with some stages degraded; see events
+  FAILED
+  CANCELLED
+}
+
+model ResearchJob {
+  id                String    @id @default(cuid())
+  projectId         String
+  kind              JobKind
+  status            JobStatus @default(QUEUED)
+  constraintsId     String?
+  opportunityId     String?
+  inngestEventId    String?
+  stage             String? // current human-readable stage key
+  error             String?
+  attempts          Int       @default(0)
+  cancelRequestedAt DateTime?
+  createdAt         DateTime  @default(now())
+  startedAt         DateTime?
+  finishedAt        DateTime?
+
+  project     Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  constraints AnalysisConstraints? @relation(fields: [constraintsId], references: [id])
+  opportunity Opportunity?         @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  events      ResearchEvent[]
+  usage       UsageRecord[]
+
+  @@index([projectId, createdAt])
+  @@index([status])
+}
+
+enum EventLevel {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+model ResearchEvent {
+  id        String     @id @default(cuid())
+  jobId     String
+  projectId String
+  stage     String
+  level     EventLevel @default(INFO)
+  message   String
+  data      Json?
+  createdAt DateTime   @default(now())
+
+  job     ResearchJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([jobId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// External evidence
+// ---------------------------------------------------------------------------
+
+enum SourceKind {
+  WEB
+  USER
+  QLOO
+}
+
+model ResearchSource {
+  id          String     @id @default(cuid())
+  projectId   String
+  kind        SourceKind
+  url         String?
+  title       String
+  publisher   String?
+  excerpt     String? // short quoted passage, never full page content
+  retrievedAt DateTime   @default(now())
+
+  project  Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  claims   Claim[]
+  evidence EvidenceReference[]
+
+  @@unique([projectId, url])
+  @@index([projectId])
+}
+
+enum ClaimStatus {
+  VERIFIED // supported by a cited public source
+  USER_PROVIDED
+  INFERRED // model inference, no direct source
+  UNCERTAIN
+  REJECTED // removed by the user
+}
+
+model Claim {
+  id            String      @id @default(cuid())
+  projectId     String
+  topic         String // e.g. "products", "collaborations", "market:competitors"
+  statement     String
+  status        ClaimStatus
+  sourceId      String?
+  opportunityId String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  source      ResearchSource?     @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  opportunity Opportunity?        @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  evidence    EvidenceReference[]
+
+  @@index([projectId, topic])
+  @@index([opportunityId])
+}
+
+// ---------------------------------------------------------------------------
+// Qloo cultural intelligence (private server-side cache — never committed)
+// ---------------------------------------------------------------------------
+
+model QlooEntity {
+  id          String   @id @default(cuid())
+  qlooId      String   @unique
+  name        String
+  types       String[] // urn:entity:* values reported by Qloo
+  subtype     String?
+  popularity  Float?
+  imageUrl    String?
+  properties  Json? // limited descriptive properties (short description, location, ...)
+  dataMode    DataMode @default(LIVE)
+  retrievedAt DateTime @default(now())
+
+  profiles          BrandProfile[]
+  relationsAsSource CulturalRelationship[] @relation("RelSource")
+  relationsAsTarget CulturalRelationship[] @relation("RelTarget")
+}
+
+model QlooTag {
+  id          String   @id @default(cuid())
+  qlooId      String   @unique // e.g. urn:tag:genre:media:...
+  name        String
+  tagType     String?
+  dataMode    DataMode @default(LIVE)
+  retrievedAt DateTime @default(now())
+
+  themes        BrandTheme[]
+  relationships CulturalRelationship[]
+}
+
+/// Every Qloo request, its parameters and (cached) response for provenance.
+model QlooQuery {
+  id          String   @id @default(cuid())
+  cacheKey    String   @unique
+  endpoint    String
+  params      Json
+  response    Json
+  status      Int
+  dataMode    DataMode
+  durationMs  Int
+  retrievedAt DateTime @default(now())
+
+  relationships CulturalRelationship[]
+}
+
+/// A Qloo-reported affinity between a signal (entity or tag) and a target entity.
+model CulturalRelationship {
+  id             String   @id @default(cuid())
+  projectId      String
+  sourceEntityId String?
+  sourceTagId    String?
+  targetEntityId String
+  domain         String // filter.type of the query, e.g. urn:entity:brand
+  affinity       Float? // as reported; only comparable within the same query
+  rank           Int // position in the query result
+  explainability Json? // Qloo explainability payload when requested
+  filters        Json? // geography / audience filters applied
+  queryId        String
+  dataMode       DataMode
+  retrievedAt    DateTime @default(now())
+
+  project      Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceEntity QlooEntity?         @relation("RelSource", fields: [sourceEntityId], references: [id])
+  sourceTag    QlooTag?            @relation(fields: [sourceTagId], references: [id])
+  targetEntity QlooEntity          @relation("RelTarget", fields: [targetEntityId], references: [id])
+  query        QlooQuery           @relation(fields: [queryId], references: [id])
+  evidence     EvidenceReference[]
+
+  @@unique([projectId, queryId, targetEntityId])
+  @@index([projectId, domain])
+}
+
+/// AI interpretation of a cluster of cultural relationships.
+model CulturalInsight {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String
+  summary   String
+  domain    String
+  jobId     String?
+  createdAt DateTime @default(now())
+
+  project  Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  evidence EvidenceReference[]
+
+  @@index([projectId])
+}
+
+// ---------------------------------------------------------------------------
+// Opportunities (AI hypotheses)
+// ---------------------------------------------------------------------------
+
+model AnalysisConstraints {
+  id                 String   @id @default(cuid())
+  projectId          String
+  iteration          Int
+  focusCategories    String[]
+  excludedCategories String[]
+  regions            String[]
+  objectives         String?
+  budgetRange        String?
+  riskAppetite       String? // low | medium | high
+  notes              String?
+  parentId           String? // the iteration this refinement was derived from
+  createdAt          DateTime @default(now())
+
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  jobs          ResearchJob[]
+  opportunities Opportunity[]
+
+  @@unique([projectId, iteration])
+}
+
+enum OpportunityCategory {
+  PRODUCT_CATEGORY
+  PARTNERSHIP
+  COLLABORATION
+  LICENSING
+  AUDIENCE
+  GEOGRAPHIC
+  EXPERIENTIAL
+  ADJACENT_MARKET
+}
+
+enum OpportunityStatus {
+  CANDIDATE
+  EXCLUDED
+}
+
+enum EvidenceStrength {
+  STRONG
+  MODERATE
+  LIMITED
+  INSUFFICIENT
+}
+
+model Opportunity {
+  id               String              @id @default(cuid())
+  projectId        String
+  constraintsId    String?
+  title            String
+  category         OpportunityCategory
+  summary          String
+  hypothesis       String
+  mechanism        String // how it would make money
+  nextAction       String
+  partners         Json                @default("[]") // proposed (not confirmed) partners
+  risks            Json                @default("[]")
+  unknowns         Json                @default("[]")
+  status           OpportunityStatus   @default(CANDIDATE)
+  evidenceStrength EvidenceStrength    @default(LIMITED)
+  rank             Int?
+  dedupeKey        String
+  commercial       Json? // structured commercial investigation findings
+  commercialAt     DateTime?
+  deepDive         Json? // structured deep-dive sections when researched
+  deepDiveAt       DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  project         Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  constraints     AnalysisConstraints?    @relation(fields: [constraintsId], references: [id])
+  evaluations     OpportunityEvaluation[]
+  evidence        EvidenceReference[]
+  claims          Claim[]
+  shortlistItems  ShortlistItem[]
+  comparisonItems ComparisonItem[]
+  jobs            ResearchJob[]
+  reports         Report[]
+
+  @@unique([projectId, dedupeKey])
+  @@index([projectId, rank])
+}
+
+/// One evaluation pass. `criteria` holds per-criterion level, rationale and basis
+/// (MEASURED | MODEL_ASSESSED | UNAVAILABLE) — see src/lib/schemas/opportunity.ts.
+model OpportunityEvaluation {
+  id            String   @id @default(cuid())
+  opportunityId String
+  criteria      Json
+  rankScore     Float // deterministic, derived in TS from criteria
+  model         String
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId, createdAt])
+}
+
+enum EvidenceRole {
+  SUPPORTS
+  CONTRADICTS
+  CONTEXT
+}
+
+model EvidenceReference {
+  id             String       @id @default(cuid())
+  projectId      String
+  role           EvidenceRole @default(SUPPORTS)
+  note           String?
+  opportunityId  String?
+  insightId      String?
+  relationshipId String?
+  sourceId       String?
+  claimId        String?
+  createdAt      DateTime     @default(now())
+
+  project      Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  opportunity  Opportunity?          @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  insight      CulturalInsight?      @relation(fields: [insightId], references: [id], onDelete: Cascade)
+  relationship CulturalRelationship? @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  source       ResearchSource?       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  claim        Claim?                @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+  @@index([insightId])
+}
+
+// ---------------------------------------------------------------------------
+// Workspace artefacts
+// ---------------------------------------------------------------------------
+
+model Shortlist {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String   @default("Shortlist")
+  createdAt DateTime @default(now())
+
+  project Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   ShortlistItem[]
+
+  @@unique([projectId, name])
+}
+
+model ShortlistItem {
+  shortlistId   String
+  opportunityId String
+  note          String?
+  addedAt       DateTime @default(now())
+
+  shortlist   Shortlist   @relation(fields: [shortlistId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@id([shortlistId, opportunityId])
+}
+
+model ComparisonSet {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  createdAt DateTime @default(now())
+
+  project Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   ComparisonItem[]
+}
+
+model ComparisonItem {
+  comparisonId  String
+  opportunityId String
+  position      Int
+
+  comparison  ComparisonSet @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  opportunity Opportunity   @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@id([comparisonId, opportunityId])
+}
+
+enum ReportKind {
+  PROJECT
+  OPPORTUNITY
+}
+
+model Report {
+  id            String     @id @default(cuid())
+  projectId     String
+  opportunityId String?
+  kind          ReportKind
+  title         String
+  markdown      String
+  createdAt     DateTime   @default(now())
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Usage & cost tracking
+// ---------------------------------------------------------------------------
+
+enum Provider {
+  ANTHROPIC
+  QLOO
+  WEB_SEARCH
+}
+
+model UsageRecord {
+  id              String   @id @default(cuid())
+  projectId       String?
+  jobId           String?
+  provider        Provider
+  operation       String
+  model           String?
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  cacheReadTokens Int      @default(0)
+  webSearches     Int      @default(0)
+  costUsd         Float? // only when published prices are known
+  durationMs      Int
+  cacheHit        Boolean  @default(false)
+  retries         Int      @default(0)
+  ok              Boolean
+  createdAt       DateTime @default(now())
+
+  project Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  job     ResearchJob? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@index([provider, createdAt])
+}

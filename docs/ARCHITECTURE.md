@@ -1,79 +1,116 @@
 # Outbranch — Architecture
 
-Outbranch is one Next.js (App Router, TypeScript strict) application. All backend logic
-lives in this codebase; long-running research runs as durable Inngest functions.
+One Next.js 16 application (App Router, TypeScript strict). All backend logic lives in this
+codebase; long-running research runs as durable Inngest functions that call back into the
+same server modules.
 
 ## Runtime topology
 
 ```
-Browser ──► Next.js (RSC pages, Server Actions, Route Handlers)
-               │            │
-               │            ├─► /api/inngest  (Inngest serve endpoint — durable research steps)
-               │            ├─► /api/projects/:id/events (SSE progress stream, reads ResearchEvent)
-               │            └─► /api/health
-               ▼
-          PostgreSQL (Prisma)  ◄── every agent step persists its output + provenance
-               ▲
-     Providers (server-only): Anthropic (Claude + server web search/fetch) · Qloo
+Browser ──► Next.js
+             ├─ Server Components (pages)          read through the data-access layer
+             ├─ Server Actions                      every user mutation (validated with zod, rate-limited)
+             ├─ /api/inngest                        Inngest serve endpoint: durable research steps
+             ├─ /api/projects/:id/events            Server-Sent Events progress, resumable by cursor
+             ├─ /api/projects/:id/graph             cultural network as typed JSON
+             ├─ /api/reports/:id/markdown           report export
+             ├─ /api/health                         liveness + configuration (no secrets)
+             └─ /api/auth/*                         Auth.js (guest + optional GitHub)
+                          │
+                          ▼
+                PostgreSQL (Prisma 7, pg driver adapter)
+                          ▲
+   Providers (server-only): Anthropic Claude (+ server-side web search/fetch) · Qloo Insights
 ```
 
-Deploy target: Vercel (app) + managed Postgres (Neon) + Inngest Cloud.
-Local: `docker compose up -d db` + `npx inngest-cli dev`.
+Deployment: Vercel (app) + managed Postgres (e.g. Neon) + Inngest Cloud. Locally:
+`docker compose up -d db` and `npm run inngest`.
 
-## Research pipeline (Inngest functions, one step per stage)
+## Research pipeline
 
-| Stage | Input | Output (persisted) | Model / provider |
-|---|---|---|---|
-| 1. Resolve | user identifier | candidate entities (ambiguity → user picks) | Claude Haiku + web search |
-| 2. Brand research | confirmed entity + user context | `BrandProfile`, `ResearchSource`, `Claim` (verified / user / inferred / uncertain) | Claude Sonnet + web search/fetch |
-| — | **user verifies/edits profile** | `BrandProfile.status = CONFIRMED` | gate: discovery cannot start before this |
-| 3. Cultural research | profile themes, references | `QlooEntity`, `QlooTag` (resolved), `CulturalRelationship`, `CulturalInsight` | Qloo search, tags, insights; Claude plans which domains to query |
-| 4. Discovery | profile + cultural evidence + constraints | `Opportunity` (AI hypothesis), `EvidenceRef` links | Claude Sonnet / Opus, structured output |
-| 5. Commercial investigation | top candidates | `ResearchSource`, `Claim` per opportunity | Claude + web search |
-| 6. Evaluation | opportunity + evidence | `OpportunityEvaluation` (criteria, rationale, model-assessed vs measured) | Claude, deterministic ranking in TS |
-| 7. Deep dive / report | opportunity | `Report` (markdown sections + sources) | Claude |
+Each stage is an Inngest `step.run`, so completed stages are memoised: retries resume at the
+failed stage, and expensive LLM calls are split from cheap persistence steps.
 
-Each step emits `ResearchEvent` rows (stage, message, timestamps) that the UI streams.
-Cancellation uses Inngest `cancelOn`; retries are bounded per step; concurrency is keyed
-per user. Token usage and provider calls are recorded in `UsageRecord`.
+| Job | Steps | Models / providers |
+|---|---|---|
+| `RESOLVE_ENTITY` | web search → ambiguity decision → candidates (auto-continues when unambiguous) | Sonnet 5.5 + web search, Haiku 5.5 |
+| `BRAND_RESEARCH` | web research → structured extraction → persist profile, sources, classified claims → resolve brand, references and themes in Qloo | Sonnet 5.5 + web search/fetch, Qloo `/search`, `/v2/tags` |
+| — | **user verifies the profile**; editing it later re-opens verification | gate enforced server-side |
+| `DISCOVERY` | plan domains → load seeds → Qloo insights per domain → cultural insights → generate hypotheses → commercial investigation of the top 4 (parallel steps) → evaluate → rank | Haiku (plan), Qloo `/v2/insights`, Sonnet 5.5 (high effort) |
+| `DEEP_DIVE` | commercial investigation if missing → twelve-section deep dive → re-evaluate → re-rank | Sonnet 5.5 |
+
+Reports are rendered deterministically from saved research (no LLM), so they cannot add claims.
+
+**Job lifecycle.** `ResearchJob` (status, stage, attempts, error) and `ResearchEvent` (stage,
+level, message) are written by every step; the UI streams events over SSE. Cancellation sets
+`cancelRequestedAt`, sends an Inngest `cancelOn` event, and every stage boundary checks it.
+Concurrency is bounded per workspace (2) and globally (6). A sweeper cron marks jobs with no
+progress for 30 minutes as interrupted and restores the project to an actionable stage; retry
+re-runs the same job kind and reuses persisted stages and cached Qloo responses.
 
 ## Evidence model
 
-Three separate kinds of knowledge, never merged:
+| Kind | Tables | Rules |
+|---|---|---|
+| Qloo cultural signals | `QlooEntity`, `QlooTag`, `QlooQuery`, `CulturalRelationship` | Every relationship stores its query, rank within that query, explainability contributors, filters, data mode and retrieval time. Ranks are never compared across queries. |
+| External evidence | `ResearchSource`, `Claim` | A claim is `VERIFIED` only if it cites a source that was actually retrieved; otherwise it is downgraded to `INFERRED`. |
+| AI hypotheses | `CulturalInsight`, `Opportunity`, `OpportunityEvaluation` | Must cite evidence aliases (R#, I#, S#). Invented aliases are dropped, and opportunities without Qloo evidence are discarded. Partners are stored as `proposed`. |
 
-1. **Qloo cultural signals** — `CulturalRelationship` with query context, affinity,
-   explainability, retrieval timestamp.
-2. **External commercial evidence** — `ResearchSource` (URL, title, retrievedAt) + `Claim`.
-3. **AI hypotheses** — `Opportunity` / `OpportunityEvaluation`, always labeled as proposed.
+`EvidenceReference` links hypotheses to evidence with a role (`SUPPORTS`, `CONTRADICTS`, `CONTEXT`).
+Evidence strength is derived from counts of Qloo relationships and *opportunity-specific*
+verified claims, never from model confidence. `rankScore` is a deterministic function of the
+criteria levels and their basis (`src/server/research/ranking.ts`).
 
-Graph edges carry one of these provenances and render differently.
+Natural-language brand themes are kept separate from Qloo tags. A theme becomes a tag signal
+only when `matchTag` finds a genuine token overlap with a real Qloo tag.
 
-## Provider modes
+## Qloo integration: verified behaviour
 
-`PROVIDER_MODE=live|fixture`. Fixture mode serves hand-authored synthetic data that is
-labeled in the UI ("Simulated data"). Live Qloo responses are cached server-side in
-Postgres only; Qloo response data is never committed to this public repository.
+Checked against the live hackathon API during development:
 
-## Security
+- Hackathon keys only work against `https://hackathon.api.qloo.com`, using the `X-Api-Key` header.
+- `filter.type` for games is `urn:entity:videogame`; `urn:entity:video_game` is rejected.
+- `filter.location.query` is ignored for non-place entity types (identical results). Regional
+  focus therefore uses `signal.location.query`, which measurably re-weights brand results, and
+  `filter.location.query` is reserved for places and destinations.
+- `/search` returns tags with `tag_id`; `/v2/insights` returns `id`; some artist tags have neither. The schema accepts both and skips malformed tags.
+- `feature.explainability=true` returns per-result contributor scores, which are used to
+  attribute graph edges to the seed that produced them.
+- `/v2/audiences` requires `filter.audience.types` or `filter.parents.types`.
+- `/v2/analysis/compare` powers the taste-overlap panel in comparisons.
 
-Env validated with Zod at boot · secrets server-only (`server-only` imports) · Auth.js
-sessions + per-project ownership checks · rate limiting on mutation endpoints · URL
-validation with SSRF guard (no private IP ranges) · fetched web content wrapped as
-untrusted data in prompts, never as instructions · all LLM output validated with Zod.
+Responses are cached in `QlooQuery` for 7 days (private server-side caching is permitted) and
+are never committed to the repository.
+
+## Security and reliability
+
+- **Environment:** validated with zod at start-up (`src/server/env.ts`); secrets only in `server-only` modules.
+- **Auth:** Auth.js JWT sessions (guest or GitHub), personal workspaces, and an ownership check on every mutation (`assertProjectAccess`). Showcase projects are readable by any signed-in user and writable by nobody else.
+- **Abuse limits:** per-workspace job budgets (hourly and concurrent) and a daily project limit, enforced against persisted history so they hold across serverless instances.
+- **Untrusted input:** user URLs pass an SSRF guard (public http(s) hostnames only; private IPs, internal names, credentials and odd ports are rejected). All web and user content is wrapped in `<untrusted_*>` tags, and every system prompt carries an instruction-isolation policy.
+- **Outputs:** structured outputs plus zod validation on every LLM call; refusals and truncation become typed provider errors; Claude calls request server-side refusal fallback where supported.
+- **Providers:** bounded retries (Anthropic SDK retries; Qloo retries 429 and 5xx with backoff and `retry-after`), timeouts, and user-safe error messages that never include payloads or keys.
+- **Cost:** every provider call writes a `UsageRecord` (tokens, web searches, cache hits, retries, duration, cost where list prices are known).
 
 ## Source layout
 
 ```
 src/
-  app/            (marketing)/  (app)/  api/
-  components/     ui/ (shadcn) · brand/ · graph/ · research/
+  app/
+    (marketing)/          landing page, brand system
+    (auth)/signin         sign-in
+    (workspace)/          projects, project tabs (overview, opportunities, network, compare, reports, log), usage
+    api/                  inngest, events (SSE), graph, reports, health, auth
+  components/             brand · marketing · research · opportunities · network · reports · workspace · ui (shadcn)
+  lib/                    shared zod schemas, graph types and layout
   server/
-    auth/  db/  env.ts
-    providers/    anthropic/  qloo/
-    research/     resolve · brand · cultural · discovery · commercial · evaluation · report
-    jobs/         inngest client + functions
-    graph/        graph preparation
-  lib/            shared types, zod schemas, utils
-prisma/           schema + migrations
-tests/            unit · integration · e2e (Playwright)
+    auth/  db.ts  env.ts
+    providers/            anthropic/ · qloo/ · errors
+    research/             resolve · brand · tags · evidence · ranking · discovery/ (context, cultural, opportunities, commercial, evaluate, deep-dive) · taste-overlap
+    jobs/                 Inngest client, lifecycle, functions/
+    graph/  reports/  evaluation/  usage/  security/  projects/ (actions, queries, presenters)
+prisma/                   schema, migrations, seed
+tests/                    unit · integration (real Postgres) · helpers
+e2e/                      Playwright journeys
+scripts/                  ablation · showcase · smoke tests · rerank
 ```

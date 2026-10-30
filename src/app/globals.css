@@ -1,26 +1,369 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+/* `.theme-dark` scopes the aubergine marketing surface; the workspace is light unless the user turns on dark mode (set on <html>). */
+@custom-variant dark (&:is(.theme-dark *, .theme-dark));
+
+/* ---------------------------------------------------------------------------
+   Burgundy First — brand palette (foundation, never used directly in components)
+   --------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand-burgundy: #6b112e;
+  --brand-burgundy-600: #821a3b;
+  --brand-burgundy-700: #570e25;
+  --brand-burgundy-100: #f1dde3;
+  --brand-burgundy-50: #f8ecef;
+  --brand-porcelain: #f8f3ee;
+  --brand-porcelain-200: #efe6de;
+  --brand-porcelain-300: #e4d8cd;
+  --brand-aubergine: #1a0e14;
+  --brand-aubergine-800: #24131c;
+  --brand-aubergine-700: #2f1823;
+  --brand-rose: #d89aa8;
+  --brand-rose-600: #9a4e62; /* rose text: 4.7:1 on rose-soft, 5.2:1 on porcelain (AA) */
+  --brand-rose-100: #f6e4e8;
+  --brand-sage: #92a88f;
+  --brand-sage-700: #4a6047; /* sage text: 5.7:1 on sage-soft, 6.2:1 on porcelain (AA) */
+  --brand-sage-100: #e5ece3;
+  --brand-ivory: #fbf7f2;
+}
+
+/* ---------------------------------------------------------------------------
+   Semantic tokens — light workspace (default)
+   --------------------------------------------------------------------------- */
+:root {
+  --background: var(--brand-porcelain);
+  --foreground: var(--brand-aubergine);
+  --card: #fffcf9;
+  --card-foreground: var(--brand-aubergine);
+  --popover: #fffcf9;
+  --popover-foreground: var(--brand-aubergine);
+  --primary: var(--brand-burgundy);
+  --primary-hover: var(--brand-burgundy-600);
+  --primary-foreground: var(--brand-ivory);
+  --secondary: var(--brand-porcelain-200);
+  --secondary-foreground: var(--brand-aubergine);
+  --muted: var(--brand-porcelain-200);
+  --muted-foreground: #6e5d65;
+  --accent: var(--brand-burgundy-50);
+  --accent-foreground: var(--brand-burgundy);
+  --selected: var(--brand-burgundy-50);
+  --selected-foreground: var(--brand-burgundy);
+  --border: #e6dad1;
+  --border-strong: #d3c3b8;
+  --input: #e0d3c9;
+  --ring: var(--brand-burgundy);
+
+  --rose: var(--brand-rose);
+  --rose-strong: var(--brand-rose-600);
+  --rose-soft: var(--brand-rose-100);
+  --sage: var(--brand-sage);
+  --sage-strong: var(--brand-sage-700);
+  --sage-soft: var(--brand-sage-100);
+
+  --success: #4f6b4b;
+  --success-soft: var(--brand-sage-100);
+  --warning: #9a5b12;
+  --warning-soft: #f7ead6;
+  --destructive: #a3222a;
+  --destructive-soft: #f6dfe0;
+  --info: #5b4a6e;
+  --info-soft: #ece7f1;
+
+  /* Charts — ordered, accessible on porcelain */
+  --chart-1: var(--brand-burgundy);
+  --chart-2: var(--brand-rose-600);
+  --chart-3: var(--brand-sage-700);
+  --chart-4: #8a6f5c;
+  --chart-5: #4a3540;
+
+  /* Graph — node kinds and edge provenance */
+  --graph-source: var(--brand-burgundy);
+  --graph-cultural: var(--brand-rose-600);
+  --graph-category: var(--brand-sage-700);
+  --graph-partner: #8a6f5c;
+  --graph-opportunity: var(--brand-aubergine);
+  --edge-qloo: var(--brand-rose);
+  --edge-verified: var(--brand-sage-700);
+  --edge-hypothesis: var(--brand-burgundy);
+
+  --radius: 0.625rem;
+  --shadow-soft: 0 1px 2px rgb(26 14 20 / 0.04), 0 4px 16px -8px rgb(26 14 20 / 0.08);
+
+  --sidebar: #f3ece5;
+  --sidebar-foreground: var(--brand-aubergine);
+  --sidebar-primary: var(--brand-burgundy);
+  --sidebar-primary-foreground: var(--brand-ivory);
+  --sidebar-accent: var(--brand-burgundy-50);
+  --sidebar-accent-foreground: var(--brand-burgundy);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-burgundy);
+}
+
+/* ---------------------------------------------------------------------------
+   Semantic tokens — aubergine marketing surface
+   --------------------------------------------------------------------------- */
+.theme-dark {
+  --background: var(--brand-aubergine);
+  --foreground: #f4e9ec;
+  --card: var(--brand-aubergine-800);
+  --card-foreground: #f4e9ec;
+  --popover: var(--brand-aubergine-800);
+  --popover-foreground: #f4e9ec;
+  --primary: var(--brand-burgundy);
+  --primary-hover: var(--brand-burgundy-600);
+  --primary-foreground: var(--brand-ivory);
+  --secondary: var(--brand-aubergine-700);
+  --secondary-foreground: #f4e9ec;
+  --muted: var(--brand-aubergine-700);
+  --muted-foreground: #c2aab4;
+  --accent: rgb(216 154 168 / 0.12);
+  --accent-foreground: var(--brand-rose);
+  --border: rgb(216 154 168 / 0.16);
+  --border-strong: rgb(216 154 168 / 0.32);
+  --input: rgb(216 154 168 / 0.2);
+  --ring: var(--brand-rose);
+  --rose: var(--brand-rose);
+  --rose-strong: var(--brand-rose);
+  --sage: var(--brand-sage);
+  --sage-strong: var(--brand-sage);
+  --selected: rgb(216 154 168 / 0.14);
+  --selected-foreground: var(--brand-rose);
+  --rose-soft: rgb(216 154 168 / 0.14);
+  --sage-soft: rgb(146 168 143 / 0.16);
+  --success: #9fb99b;
+  --success-soft: rgb(146 168 143 / 0.16);
+  --warning: #e0a85a;
+  --warning-soft: rgb(224 168 90 / 0.14);
+  --destructive: #e8777f;
+  --destructive-soft: rgb(232 119 127 / 0.14);
+  --info: #b9a6d0;
+  --info-soft: rgb(185 166 208 / 0.14);
+  --chart-1: var(--brand-rose);
+  --chart-2: #c78a98;
+  --chart-3: var(--brand-sage);
+  --chart-4: #b89a85;
+  --chart-5: #d9c3cb;
+  --graph-source: var(--brand-rose);
+  --graph-cultural: #c78a98;
+  --graph-category: var(--brand-sage);
+  --graph-partner: #b89a85;
+  --graph-opportunity: #f4e9ec;
+  --edge-verified: var(--brand-sage);
+  --edge-hypothesis: var(--brand-rose);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -8px rgb(0 0 0 / 0.5);
+  --sidebar: #150a10;
+  --sidebar-foreground: #f4e9ec;
+  --sidebar-primary: var(--brand-burgundy-600);
+  --sidebar-primary-foreground: var(--brand-ivory);
+  --sidebar-accent: rgb(216 154 168 / 0.12);
+  --sidebar-accent-foreground: var(--brand-rose);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-rose);
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-selected: var(--selected);
+  --color-selected-foreground: var(--selected-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-rose: var(--rose);
+  --color-rose-strong: var(--rose-strong);
+  --color-rose-soft: var(--rose-soft);
+  --color-sage: var(--sage);
+  --color-sage-strong: var(--sage-strong);
+  --color-sage-soft: var(--sage-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-graph-source: var(--graph-source);
+  --color-graph-cultural: var(--graph-cultural);
+  --color-graph-category: var(--graph-category);
+  --color-graph-partner: var(--graph-partner);
+  --color-graph-opportunity: var(--graph-opportunity);
+  --color-edge-qloo: var(--edge-qloo);
+  --color-edge-verified: var(--edge-verified);
+  --color-edge-hypothesis: var(--edge-hypothesis);
+  --color-aubergine: var(--brand-aubergine);
+  --color-burgundy: var(--brand-burgundy);
+  --color-porcelain: var(--brand-porcelain);
+  --color-ivory: var(--brand-ivory);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-manrope);
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
+
+  --shadow-soft: var(--shadow-soft);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-draw-path: draw-path 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-flow: flow 3s linear infinite;
+
+  @keyframes draw-path {
+    from { stroke-dashoffset: var(--path-length, 1000); }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes flow {
+    to { stroke-dashoffset: -24; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility font-editorial {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+@utility eyebrow {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reports — editorial typography for rendered Markdown
+   --------------------------------------------------------------------------- */
+.report { font-size: 15px; line-height: 1.7; color: var(--foreground); }
+.report h1 { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-size: 2.25rem; line-height: 1.15; margin: 0 0 0.75rem; text-wrap: balance; }
+.report h2 { font-family: var(--font-manrope), sans-serif; font-size: 1.25rem; font-weight: 600; margin: 2.5rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.report h3 { font-family: var(--font-manrope), sans-serif; font-size: 1.125rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
+.report h4 { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-foreground); margin: 1.25rem 0 0.375rem; }
+.report p { margin: 0.75rem 0; }
+.report ul { list-style: disc; padding-left: 1.25rem; margin: 0.75rem 0; }
+.report ol { list-style: decimal; padding-left: 1.25rem; margin: 0.75rem 0; }
+.report li + li { margin-top: 0.25rem; }
+.report blockquote { margin: 1rem 0; padding-left: 1rem; border-left: 2px solid var(--rose); color: color-mix(in oklch, var(--foreground) 85%, transparent); }
+.report table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+.report th { text-align: left; font-size: 0.75rem; font-weight: 500; padding: 0.5rem 0.75rem; background: var(--muted); border-bottom: 1px solid var(--border); }
+.report td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.report a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.report hr { margin: 2.5rem 0; border-color: var(--border); }
+.report code { font-family: var(--font-plex-mono), monospace; font-size: 0.75rem; }
+
+@media print {
+  @page { margin: 18mm 16mm; }
+  body { background: white; }
+  .report a { color: inherit; text-decoration: none; }
+  .report h2, .report h3 { break-after: avoid; }
+  .report table, .report blockquote { break-inside: avoid; }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Travelling highlight along a drawn branch (pathLength=100, dasharray "6 94"). */
+@keyframes branch-pulse {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* Slow sideways drift for the hero's valley mist. */
+@keyframes drift {
+  from { transform: translateX(-40px); }
+  to { transform: translateX(40px); }
+}
+
+/* Workspace content column: 72rem on laptops, wider on Full-HD and large MacBook screens. */
+@utility workspace-width {
+  max-width: 72rem;
+  @media (width >= 96rem) {
+    max-width: 88rem;
+  }
 }
