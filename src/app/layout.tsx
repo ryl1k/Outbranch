@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next"
 import { IBM_Plex_Mono, Inter, Manrope, Newsreader } from "next/font/google"
+import Script from "next/script"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { THEME_BOOT_SCRIPT } from "@/lib/theme"
 import "./globals.css"
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] })
@@ -36,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${manrope.variable} ${newsreader.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full">
+        <Script id="theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         <Toaster position="bottom-right" />
       </body>

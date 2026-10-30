@@ -3,11 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react"
 import { Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const STORAGE_KEY = "outbranch-theme"
-const DARK_CLASS = "theme-dark"
-
-export const THEME_BOOT_SCRIPT = `try{if(localStorage.getItem("${STORAGE_KEY}")==="dark")document.documentElement.classList.add("${DARK_CLASS}")}catch(e){}`
+import { DARK_CLASS, STORAGE_KEY } from "@/lib/theme"
 
 function savedTheme() {
   try {
