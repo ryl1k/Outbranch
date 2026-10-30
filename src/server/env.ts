@@ -13,6 +13,8 @@ const schema = z.object({
   AUTH_GITHUB_ID: z.string().optional(),
   AUTH_GITHUB_SECRET: z.string().optional(),
   AUTH_ENABLE_GUEST: bool,
+  /** New guest accounts allowed per IP in 24 hours. Keep above 1: venues and offices share an IP. */
+  GUEST_SIGNUPS_PER_IP_PER_DAY: z.coerce.number().int().positive().default(5),
   ANTHROPIC_API_KEY: z.string().optional(),
   QLOO_API_KEY: z.string().optional(),
   QLOO_API_URL: z.string().url().default("https://hackathon.api.qloo.com"),
@@ -20,6 +22,11 @@ const schema = z.object({
   /** Global guardrails for public demos (guest sign-in creates unlimited workspaces). */
   GLOBAL_JOBS_PER_HOUR: z.coerce.number().int().positive().default(60),
   DAILY_SPEND_LIMIT_USD: z.coerce.number().positive().optional(),
+  /** Billing: leave unset to disable checkout (the free-tier limits still apply). */
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  /** Public origin used for Stripe return URLs; derived from the request when unset. */
+  APP_URL: z.string().url().optional(),
   INNGEST_EVENT_KEY: z.string().optional(),
   INNGEST_SIGNING_KEY: z.string().optional(),
 })

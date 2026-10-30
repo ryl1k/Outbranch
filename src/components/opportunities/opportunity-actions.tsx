@@ -3,6 +3,7 @@
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Bookmark, BookmarkCheck, Loader2, Telescope } from "lucide-react"
+import { toastActionError } from "@/components/billing/paywall-toast"
 import { GenerateReportButton } from "@/components/reports/report-actions"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -23,10 +24,10 @@ export function OpportunityActions({
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
-  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, ok: string) =>
+  const run = (fn: () => Promise<{ ok: true } | { ok: false; error: string; paywall?: boolean }>, ok: string) =>
     start(async () => {
       const res = await fn()
-      if (!res.ok) toast.error(res.error)
+      if (!res.ok) toastActionError(res, router)
       else {
         toast.success(ok)
         router.refresh()

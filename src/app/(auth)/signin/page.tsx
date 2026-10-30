@@ -4,14 +4,15 @@ import { GithubIcon } from "@/components/brand/github-icon"
 import { AuthDivider, AuthShell } from "@/components/auth/auth-shell"
 import { CredentialsForm } from "@/components/auth/credentials-form"
 import { Button } from "@/components/ui/button"
-import { loginAction } from "@/server/auth/actions"
+import { guestSignInAction, loginAction } from "@/server/auth/actions"
 import { authProviders, signIn } from "@/server/auth/config"
 import { safeNext } from "@/server/auth/next"
 
 export const metadata = { title: "Sign in" }
 
 export default async function SignInPage({ searchParams }: PageProps<"/signin">) {
-  const redirectTo = safeNext((await searchParams).next)
+  const params = await searchParams
+  const redirectTo = safeNext(params.next)
 
   return (
     <AuthShell title="Sign in to Outbranch" description="Your projects and research history are saved to your workspace.">
@@ -41,20 +42,21 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
             </form>
           )}
           {authProviders.guest && (
-            <form
-              action={async () => {
-                "use server"
-                await signIn("guest", { redirectTo })
-              }}
-            >
+            <form action={guestSignInAction}>
+              <input type="hidden" name="next" value={redirectTo} />
               <Button type="submit" variant="outline" size="lg" className="h-11 w-full">
                 Continue as guest <ArrowRight />
               </Button>
             </form>
           )}
+          {params.error === "guest_limit" && (
+            <p role="alert" className="text-sm text-destructive">
+              Too many guest workspaces were created from this network today. Create a free account to continue.
+            </p>
+          )}
           {authProviders.guest && (
             <p className="text-xs leading-relaxed text-muted-foreground">
-              Guest sessions get a private workspace that persists in this browser for 30 days.
+              Guest sessions get a private workspace with 1 research project that persists in this browser for 30 days.
             </p>
           )}
         </div>

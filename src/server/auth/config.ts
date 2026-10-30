@@ -4,6 +4,7 @@ import GitHub from "next-auth/providers/github"
 import { db } from "@/server/db"
 import { env } from "@/server/env"
 import { z } from "zod"
+import { resolveGuestUser } from "@/server/auth/guest"
 import { verifyPassword } from "@/server/auth/password"
 import { ensurePersonalWorkspace } from "@/server/auth/workspace"
 import { assertLoginBudget, recordLoginFailure } from "@/server/security/rate-limit"
@@ -20,10 +21,9 @@ if (env.AUTH_ENABLE_GUEST) {
       id: "guest",
       name: "Guest",
       credentials: {},
-      // A guest gets a fresh private workspace; nothing is shared between guests.
+      // Each device gets one private guest workspace; nothing is shared between guests.
       async authorize() {
-        const user = await db.user.create({ data: { name: "Guest researcher", isGuest: true } })
-        await ensurePersonalWorkspace(user.id, "Guest")
+        const user = await resolveGuestUser()
         return { id: user.id, name: user.name }
       },
     }),

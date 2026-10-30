@@ -67,6 +67,7 @@ const SECTIONS = [
   ["#how-it-works", "How it works"],
   ["#evaluation", "Evaluation"],
   ["#use-cases", "Use cases"],
+  ["/pricing", "Pricing"],
 ] as const
 
 const NAV_AUTH_CLASS = "px-3 text-sm text-ivory/70 hover:text-ivory"

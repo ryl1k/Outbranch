@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FolderKanban, Gauge, Menu, Plus } from "lucide-react"
+import { CreditCard, FolderKanban, Gauge, Menu, Plus } from "lucide-react"
 import { ThemeToggle } from "@/components/workspace/theme"
 import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils"
 const NAV = [
   { href: "/projects", label: "Projects", icon: FolderKanban, match: (p: string) => p === "/projects" || /^\/projects\/(?!new)/.test(p) },
   { href: "/projects/new", label: "New research", icon: Plus, match: (p: string) => p === "/projects/new" },
-  { href: "/settings/usage", label: "Usage & providers", icon: Gauge, match: (p: string) => p.startsWith("/settings") },
+  { href: "/settings/usage", label: "Usage & providers", icon: Gauge, match: (p: string) => p.startsWith("/settings/usage") },
+  { href: "/settings/billing", label: "Billing", icon: CreditCard, match: (p: string) => p.startsWith("/settings/billing") },
 ]
 
 type ViewerSummary = { name: string; isGuest: boolean; workspace: string }
